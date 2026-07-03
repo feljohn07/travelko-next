@@ -29,9 +29,9 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       <AdminNav />
-      <div className="md:pl-[240px]">{children}</div>
+      <main className="flex-1 p-6 overflow-x-hidden">{children}</main>
     </div>
   );
 }

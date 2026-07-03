@@ -13,36 +13,66 @@ export function AuthProvider({ children }) {
     profilePicture: null,
   });
 
-  // Read from localStorage on mount (client-side only)
+  // Read from localStorage or sessionStorage on mount (client-side only)
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
+    let storage = null;
+    if (typeof window !== "undefined") {
+      if (localStorage.getItem("auth_token")) {
+        storage = localStorage;
+      } else if (sessionStorage.getItem("auth_token")) {
+        storage = sessionStorage;
+      }
+    }
+
+    if (storage) {
+      const token = storage.getItem("auth_token");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAuth({
         isLoggedIn: true,
         token,
-        role: localStorage.getItem("auth_role"),
+        role: storage.getItem("auth_role"),
         user: (() => {
           try {
-            return JSON.parse(localStorage.getItem("auth_user") || "null");
+            return JSON.parse(storage.getItem("auth_user") || "null");
           } catch {
             return null;
           }
         })(),
-        profilePicture: localStorage.getItem("profilePicture"),
+        profilePicture: storage.getItem("profilePicture"),
       });
     }
   }, []);
 
-  const login = (token, role, user, profilePicture = null) => {
-    localStorage.setItem("auth_token", token);
-    localStorage.setItem("auth_role", role);
-    localStorage.setItem("auth_user", JSON.stringify(user));
-    if (profilePicture) localStorage.setItem("profilePicture", profilePicture);
+  const login = (token, role, user, profilePicture = null, rememberMe = false) => {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+
+    // Clear the other storage to avoid conflict
+    otherStorage.removeItem("auth_token");
+    otherStorage.removeItem("auth_role");
+    otherStorage.removeItem("auth_user");
+    otherStorage.removeItem("profilePicture");
+
+    storage.setItem("auth_token", token);
+    storage.setItem("auth_role", role);
+    storage.setItem("auth_user", JSON.stringify(user));
+    if (profilePicture) {
+      storage.setItem("profilePicture", profilePicture);
+    }
     setAuth({ isLoggedIn: true, token, role, user, profilePicture });
   };
 
   const logout = () => {
-    localStorage.clear();
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_role");
+    localStorage.removeItem("auth_user");
+    localStorage.removeItem("profilePicture");
+
+    sessionStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_role");
+    sessionStorage.removeItem("auth_user");
+    sessionStorage.removeItem("profilePicture");
+
     setAuth({
       isLoggedIn: false,
       token: null,
@@ -53,7 +83,12 @@ export function AuthProvider({ children }) {
   };
 
   const updateProfilePicture = (url) => {
-    localStorage.setItem("profilePicture", url);
+    if (localStorage.getItem("profilePicture") !== null) {
+      localStorage.setItem("profilePicture", url);
+    }
+    if (sessionStorage.getItem("profilePicture") !== null) {
+      sessionStorage.setItem("profilePicture", url);
+    }
     setAuth((prev) => ({ ...prev, profilePicture: url }));
   };
 

@@ -99,8 +99,12 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <p>© {new Date().getFullYear()} TravelKo. All rights reserved.</p>
           <div className="flex gap-6">
-            <span className="hover:text-gray-300 cursor-pointer transition-colors">Privacy Policy</span>
-            <span className="hover:text-gray-300 cursor-pointer transition-colors">Terms of Service</span>
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>

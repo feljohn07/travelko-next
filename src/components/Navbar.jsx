@@ -27,11 +27,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
   const isActive = (href, exact) =>
     exact ? pathname === href : pathname.startsWith(href);
 
@@ -138,6 +133,7 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
+              onClick={() => setMenuOpen(false)}
               className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive(href, exact)
                   ? "text-primary bg-primary/10"
@@ -153,18 +149,23 @@ export default function Navbar() {
               <>
                 <Link
                   href="/coordinator/dashboard"
+                  onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <FaTachometerAlt size={14} /> Dashboard
                 </Link>
                 <Link
                   href="/coordinator/profile"
+                  onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <FaUser size={14} /> Profile
                 </Link>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    handleLogout();
+                  }}
                   className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50"
                 >
                   <FaSignOutAlt size={14} /> Logout
@@ -173,6 +174,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
+                onClick={() => setMenuOpen(false)}
                 className="block w-full text-center px-4 py-2.5 rounded-full bg-primary text-white text-sm font-semibold"
               >
                 Login
