@@ -176,3 +176,8 @@
 /* react-toastify */
 .Toastify__progress-bar--success { background: oklch(0.53 0.156 146) !important; }
 .Toastify__toast-icon--success svg { fill: oklch(0.53 0.156 146) !important; }
+
+/* portal datepicker popup container z-index override */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}

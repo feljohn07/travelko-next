@@ -24,6 +24,17 @@ const MENU_ITEMS = [
   { label: "Profile", href: "/coordinator/profile", icon: FaUser },
 ];
 
+const getProfilePictureUrl = (pic) => {
+  if (!pic) return null;
+  if (pic.startsWith("http://") || pic.startsWith("https://") || pic.startsWith("data:")) {
+    return pic;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/";
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPic = pic.startsWith("/") ? pic : `/${pic}`;
+  return `${cleanBase}${cleanPic}`;
+};
+
 export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -54,7 +65,7 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           aria-label="Open mobile menu"
         >
           <Image
-            src={profilePicture || defaultProfile}
+            src={getProfilePictureUrl(profilePicture) || defaultProfile}
             alt="Coordinator"
             width={40}
             height={40}
@@ -70,9 +81,9 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
         <div className="hidden md:block" style={{ width: collapsed ? 72 : 230 }} />
 
         {/* Center: Brand name */}
-        <div className="font-brand text-2xl text-primary font-normal">
+        <Link href="/" className="font-brand text-2xl text-primary font-normal hover:opacity-95 transition-opacity">
           TravelKo
-        </div>
+        </Link>
 
         {/* Right: Dashboard Status */}
         <div className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
@@ -86,37 +97,45 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           collapsed ? "w-[72px]" : "w-[230px]"
         }`}
       >
-        <div className="p-3 flex flex-col gap-2 h-full justify-between">
+        <div className={`p-3 flex flex-col gap-2 h-full justify-between ${collapsed ? "items-center" : ""}`}>
           <div className="flex flex-col gap-2">
             {/* Sidebar Collapse Toggle */}
             <button
               onClick={onToggleCollapsed}
-              className="flex items-center gap-3 w-full p-2.5 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+              className={`flex items-center gap-3 rounded-xl text-gray-700 hover:bg-gray-55 transition-colors focus:outline-none cursor-pointer ${
+                collapsed ? "h-10 w-10 justify-center p-0" : "w-full p-2.5"
+              }`}
             >
-              <div className="h-10 w-10 shrink-0 grid place-items-center rounded-xl bg-gray-50 text-gray-500">
+              <div className={`h-10 w-10 shrink-0 grid place-items-center rounded-xl text-gray-500 ${collapsed ? "" : "bg-gray-50"}`}>
                 <FaBars size={18} />
               </div>
               {!collapsed && <span className="font-bold text-sm">Menu</span>}
             </button>
 
             {/* Menu Links */}
-            <nav className="flex flex-col gap-1">
+            <nav className={`flex flex-col gap-1 ${collapsed ? "w-full items-center" : ""}`}>
               {MENU_ITEMS.map(({ label, href, icon: Icon }) => {
                 const active = isActive(href);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+                    className={`flex items-center gap-3 rounded-xl transition-all ${
+                      collapsed 
+                        ? "h-10 w-10 justify-center p-0" 
+                        : "w-full p-2.5"
+                    } ${
                       active
-                        ? "bg-primary/10 text-primary"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? collapsed
+                          ? "bg-primary/20 text-primary"
+                          : "bg-primary/10 text-primary"
+                        : "text-gray-700 hover:bg-gray-55"
                     }`}
                     title={label}
                   >
                     <div
                       className={`h-10 w-10 shrink-0 grid place-items-center rounded-xl transition-colors ${
-                        active ? "bg-primary/20 text-primary" : "text-gray-500"
+                        active && !collapsed ? "bg-primary/20 text-primary" : active ? "text-primary" : "text-gray-500"
                       }`}
                     >
                       <Icon size={18} />
@@ -131,7 +150,9 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 p-2.5 rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none cursor-pointer w-full"
+            className={`flex items-center gap-3 rounded-xl text-gray-700 hover:bg-red-50 hover:text-red-650 transition-colors focus:outline-none cursor-pointer ${
+              collapsed ? "h-10 w-10 justify-center p-0" : "w-full p-2.5"
+            }`}
             title="Logout"
           >
             <div className="h-10 w-10 shrink-0 grid place-items-center rounded-xl text-gray-500 group-hover:text-red-600">
@@ -152,7 +173,7 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           <div className="p-4 flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <Image
-                src={profilePicture || defaultProfile}
+                src={getProfilePictureUrl(profilePicture) || defaultProfile}
                 alt="Profile"
                 width={50}
                 height={50}

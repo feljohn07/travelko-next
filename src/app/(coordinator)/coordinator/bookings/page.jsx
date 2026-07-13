@@ -6,7 +6,7 @@ import api from "@/services/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FaSearch, FaEye, FaCheck, FaTimes } from "react-icons/fa";
+import { FaSearch, FaEye, FaCheck, FaTimes, FaBan } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 const formatPeso = (n) =>
@@ -20,14 +20,18 @@ const getStatusColor = (status) => {
   switch (status?.toLowerCase()) {
     case "approved":
     case "paid":
+    case "completed":
       return "text-green-650 bg-green-50";
     case "request":
       return "text-yellow-650 bg-yellow-50";
     case "cancelled":
     case "rejected":
       return "text-red-650 bg-red-50";
+    case "upcoming":
+    case "ongoing":
+      return "text-blue-650 bg-blue-50";
     default:
-      return "text-gray-500 bg-gray-50";
+      return "text-gray-550 bg-gray-50";
   }
 };
 
@@ -39,6 +43,38 @@ export default function BookingsPage() {
   const [activeTab, setActiveTab] = useState("approval"); // approval | private | joiner
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [statuses, setStatuses] = useState([]);
+
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        let endpoint = "";
+        if (activeTab === "private") {
+          endpoint = "/booking/all/statuses";
+        } else if (activeTab === "joiner") {
+          endpoint = "/tours/all/statuses";
+        }
+
+        if (endpoint) {
+          const res = await api.get(endpoint);
+          setStatuses(Array.isArray(res.data) ? res.data : []);
+        } else {
+          setStatuses([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch statuses, using fallback.", err);
+        const fallback =
+          activeTab === "private"
+            ? ["request", "approved", "cancelled", "rejected"]
+            : ["draft", "upcoming", "ongoing", "completed"];
+        setStatuses(fallback);
+      }
+    };
+
+    if (token) {
+      fetchStatuses();
+    }
+  }, [activeTab, token]);
 
   // Modals state
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -57,6 +93,12 @@ export default function BookingsPage() {
   const [rejectRemarks, setRejectRemarks] = useState("");
   const [rejectError, setRejectError] = useState("");
   const [rejectLoading, setRejectLoading] = useState(false);
+
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelBooking, setCancelBooking] = useState(null);
+  const [cancelRemarks, setCancelRemarks] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const [clientsModalOpen, setClientsModalOpen] = useState(false);
   const [selectedTourClients, setSelectedTourClients] = useState(null);
@@ -82,6 +124,7 @@ export default function BookingsPage() {
           joinerPrice: tour.joinerPrice || 0,
           joinerBookedSlots: tour.joinerBookedSlots || 0,
           joinerMaxSlots: tour.joinerMaxSlots || 0,
+          status: tour.status || "ongoing",
           bookings: tour.bookings || [],
         }));
       } else {
@@ -138,7 +181,7 @@ export default function BookingsPage() {
       filtered = filtered.filter((b) => b.type === "private");
     }
 
-    if (statusFilter !== "all" && activeTab !== "joiner" && activeTab !== "approval") {
+    if (statusFilter !== "all" && activeTab !== "approval") {
       filtered = filtered.filter((b) => b.status === statusFilter);
     }
 
@@ -236,6 +279,41 @@ export default function BookingsPage() {
     }
   };
 
+  const cancelPrivate = async () => {
+    if (!cancelRemarks || cancelRemarks.trim().length < 10) {
+      setCancelError("Remarks must be at least 10 characters long.");
+      return;
+    }
+
+    setCancelLoading(true);
+    setCancelError("");
+
+    try {
+      await api.put(`/booking/cancel/${cancelBooking.id}/private`, {
+        remarks: cancelRemarks.trim(),
+      });
+
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === cancelBooking.id
+            ? { ...b, status: "cancelled", displayStatus: "cancelled" }
+            : b
+        )
+      );
+
+      toast.success("Private booking cancelled successfully.");
+      setCancelModalOpen(false);
+      setCancelBooking(null);
+      setCancelRemarks("");
+    } catch (err) {
+      setCancelError(
+        err.response?.data?.message || "Failed to cancel booking."
+      );
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   const cancelJoinerBookings = async (tourId) => {
     try {
       await api.patch(`/booking/cancel/${tourId}/joiners`, {});
@@ -293,7 +371,7 @@ export default function BookingsPage() {
               </select>
             </div>
 
-            {activeTab !== "joiner" && activeTab !== "approval" && (
+            {activeTab !== "approval" && (
               <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Status Filter</label>
                 <select
@@ -302,10 +380,11 @@ export default function BookingsPage() {
                   className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none"
                 >
                   <option value="all">All</option>
-                  <option value="request">Request</option>
-                  <option value="approved">Approved</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="rejected">Rejected</option>
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
@@ -399,6 +478,24 @@ export default function BookingsPage() {
                             </button>
                           </>
                         )}
+
+                        {activeTab === "private" &&
+                          (b.status === "approved" ||
+                            b.status === "upcoming" ||
+                            b.status === "paid") && (
+                            <button
+                              onClick={() => {
+                                setCancelBooking(b);
+                                setCancelRemarks("");
+                                setCancelError("");
+                                setCancelModalOpen(true);
+                              }}
+                              className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer focus:outline-none"
+                              title="Cancel Booking"
+                            >
+                              <FaBan size={12} />
+                            </button>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -425,16 +522,22 @@ export default function BookingsPage() {
                   <th className="p-4 font-bold text-gray-700">Category</th>
                   <th className="p-4 font-bold text-gray-700 text-center">Booked Slots</th>
                   <th className="p-4 font-bold text-gray-700 text-center">Max Slots</th>
+                  <th className="p-4 font-bold text-gray-700">Status</th>
                   <th className="p-4 font-bold text-gray-700 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {dataToRender.map((tour) => (
-                  <tr key={tour.tourId} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={tour.tourId} className="hover:bg-gray-55/50 transition-colors">
                     <td className="p-4 font-extrabold text-gray-900">{tour.tourTitle}</td>
-                    <td className="p-4 text-gray-550">{tour.category}</td>
+                    <td className="p-4 text-gray-555">{tour.category}</td>
                     <td className="p-4 text-center font-bold text-primary">{tour.joinerBookedSlots}</td>
                     <td className="p-4 text-center text-gray-600">{tour.joinerMaxSlots}</td>
+                    <td className="p-4">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${getStatusColor(tour.status)}`}>
+                        {tour.status}
+                      </span>
+                    </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -459,7 +562,7 @@ export default function BookingsPage() {
                 ))}
                 {dataToRender.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-10 text-center text-gray-400 font-medium">
+                    <td colSpan={6} className="p-10 text-center text-gray-400 font-medium">
                       No group tour slots booked.
                     </td>
                   </tr>
@@ -604,6 +707,55 @@ export default function BookingsPage() {
                 className="w-full py-5 text-xs font-bold cursor-pointer"
               >
                 {rejectLoading ? "Processing..." : "Confirm Rejection"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== CANCEL PRIVATE DIALOG ===== */}
+      <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
+        <DialogContent className="sm:max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="font-bold text-lg text-gray-900 pb-2 border-b border-gray-50 text-red-650">
+              Cancel Private Booking
+            </DialogTitle>
+          </DialogHeader>
+
+          {cancelBooking && (
+            <div className="space-y-4 my-2 text-sm">
+              <div className="text-xs text-gray-600 space-y-1">
+                <p><strong>Destination:</strong> {cancelBooking.tourTitle}</p>
+                <p><strong>Customer:</strong> {cancelBooking.customer}</p>
+                <p><strong>Booking ID:</strong> #{cancelBooking.id}</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Reason for Cancellation *</label>
+                <textarea
+                  rows="4"
+                  placeholder="Provide details (Min 10 characters)..."
+                  value={cancelRemarks}
+                  onChange={(e) => {
+                    setCancelRemarks(e.target.value);
+                    if (e.target.value.trim().length >= 10) {
+                      setCancelError("");
+                    }
+                  }}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none resize-none"
+                />
+                {cancelError && (
+                  <span className="text-red-550 font-semibold text-xs mt-1 block">⚠ {cancelError}</span>
+                )}
+              </div>
+
+              <Button
+                variant="destructive"
+                onClick={cancelPrivate}
+                disabled={cancelLoading}
+                className="w-full py-5 text-xs font-bold cursor-pointer"
+              >
+                {cancelLoading ? "Processing..." : "Confirm Cancellation"}
               </Button>
             </div>
           )}

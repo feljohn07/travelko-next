@@ -51,7 +51,7 @@ export default function CoordinatorTours() {
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [userSelected, setUserSelected] = useState(false);
+  const ignoreNextSearch = useRef(false);
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -102,7 +102,7 @@ export default function CoordinatorTours() {
   const handleEdit = (tour) => {
     setIsEdit(true);
     setEditingTourId(tour._id || tour.id);
-    setUserSelected(true);
+    ignoreNextSearch.current = true;
 
     setForm({
       title: tour.title || "",
@@ -157,7 +157,7 @@ export default function CoordinatorTours() {
     setSuggestions([]);
     setSuggestionsLoading(false);
     setShowSuggestions(false);
-    setUserSelected(false);
+    ignoreNextSearch.current = false;
     setForm({
       title: "",
       category: "Mountain Climbing",
@@ -244,7 +244,7 @@ export default function CoordinatorTours() {
     });
     const formatted = uniqueParts.join(", ");
 
-    setUserSelected(true);
+    ignoreNextSearch.current = true;
     setForm((prev) => ({
       ...prev,
       address: formatted,
@@ -273,11 +273,9 @@ export default function CoordinatorTours() {
   }, []);
 
   useEffect(() => {
-    if (userSelected) {
-      const timer = setTimeout(() => {
-        setUserSelected(false);
-      }, 0);
-      return () => clearTimeout(timer);
+    if (ignoreNextSearch.current) {
+      ignoreNextSearch.current = false;
+      return;
     }
 
     if (!form.address || form.address.trim().length < 3) {
@@ -305,7 +303,7 @@ export default function CoordinatorTours() {
     }, 400);
 
     return () => clearTimeout(delayDebounce);
-  }, [form.address, userSelected]);
+  }, [form.address]);
 
   useEffect(() => {
     if (token) {
@@ -730,32 +728,7 @@ export default function CoordinatorTours() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Latitude *</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={form.latitude}
-                  onChange={onChange("latitude")}
-                  placeholder="E.g. 14.5995"
-                  required
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Longitude *</label>
-                <input
-                  type="number"
-                  step="any"
-                  value={form.longitude}
-                  onChange={onChange("longitude")}
-                  placeholder="E.g. 120.9842"
-                  required
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              </div>
-            </div>
+
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1">Meetup Locations (comma separated)</label>
@@ -779,6 +752,7 @@ export default function CoordinatorTours() {
                 monthsShown={1}
                 shouldCloseOnSelect={true}
                 dateFormat="MMM d, yyyy"
+                portalId="datepicker-portal"
                 customInput={
                   <button type="button" className="px-4 py-2 border border-primary text-primary hover:bg-brand-light font-bold text-xs rounded-xl flex items-center gap-2 cursor-pointer focus:outline-none select-none">
                     <FaCalendarAlt /> Choose Dates

@@ -238,7 +238,7 @@ export default function ToursClient({ initialTours, initialCategory }) {
                       </div>
 
                       {/* Content details */}
-                      <div className="p-5 flex flex-col flex-1 h-full">
+                      <div className="p-5 flex flex-col flex-1 min-w-0 h-full">
                         <div className="flex items-center justify-between mb-2">
                           <span className="px-2.5 py-1 bg-brand-light text-primary text-xs font-bold rounded-lg leading-none">
                             {tour.category}

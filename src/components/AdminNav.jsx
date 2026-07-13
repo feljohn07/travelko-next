@@ -56,9 +56,9 @@ export default function AdminNav() {
           </button>
           <span className="font-bold text-base">Admin Panel</span>
         </div>
-        <div className="font-brand text-2xl text-primary font-normal">
+        <Link href="/" className="font-brand text-2xl text-primary font-normal hover:opacity-95 transition-opacity">
           TravelKo
-        </div>
+        </Link>
       </header>
 
       {/* Desktop Sidebar */}

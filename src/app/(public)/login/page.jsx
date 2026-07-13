@@ -57,7 +57,12 @@ export default function LoginPage() {
       }
 
       const user = data.user || data.admin || data.data?.user;
-      const profilePic = data.profilePicture || user?.profilePicture || null;
+      const profilePic =
+        data.profileImageUrl ||
+        data.profilePicture ||
+        user?.profileImageUrl ||
+        user?.profilePicture ||
+        null;
 
       // Persist auth through hook
       performContextLogin(token, role, user, profilePic, rememberMe);

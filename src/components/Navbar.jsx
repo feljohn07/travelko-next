@@ -18,12 +18,24 @@ import Image from "next/image";
 const NAV_LINKS = [
   { href: "/", label: "Home", exact: true },
   { href: "/tours", label: "Tours" },
+  { href: "/map", label: "Map" },
   { href: "/about", label: "About Us" },
 ];
 
+const getProfilePictureUrl = (pic) => {
+  if (!pic) return null;
+  if (pic.startsWith("http://") || pic.startsWith("https://") || pic.startsWith("data:")) {
+    return pic;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/";
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPic = pic.startsWith("/") ? pic : `/${pic}`;
+  return `${cleanBase}${cleanPic}`;
+};
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isLoggedIn, profilePicture, logout } = useAuth();
+  const { isLoggedIn, profilePicture, logout, user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -68,7 +80,7 @@ export default function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="ml-2 focus:outline-none">
                   <Image
-                    src={profilePicture || defaultProfile}
+                    src={getProfilePictureUrl(profilePicture) || defaultProfile}
                     alt="Profile"
                     width={38}
                     height={38}
@@ -76,26 +88,37 @@ export default function Navbar() {
                     unoptimized={!!profilePicture}
                   />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border border-gray-100 shadow-xl bg-white/95 backdrop-blur-md">
+                  <div className="px-3 py-2.5 mb-1.5 border-b border-gray-50">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Signed in as</p>
+                    <p className="text-sm font-bold text-gray-800 truncate mt-0.5">{user?.fullName || "Coordinator"}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email || ""}</p>
+                  </div>
                   <DropdownMenuItem asChild>
-                    <Link href="/coordinator/dashboard" className="flex items-center gap-2 cursor-pointer">
-                      <FaTachometerAlt size={15} />
-                      Dashboard
+                    <Link
+                      href="/coordinator/dashboard"
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-gray-700 hover:bg-gray-55 hover:text-gray-900 focus:bg-gray-55 focus:text-gray-900 transition-colors cursor-pointer"
+                    >
+                      <FaTachometerAlt size={14} className="text-gray-450" />
+                      <span>Dashboard</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/coordinator/profile" className="flex items-center gap-2 cursor-pointer">
-                      <FaUser size={15} />
-                      Profile
+                    <Link
+                      href="/coordinator/profile"
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-gray-700 hover:bg-gray-55 hover:text-gray-900 focus:bg-gray-55 focus:text-gray-900 transition-colors cursor-pointer"
+                    >
+                      <FaUser size={14} className="text-gray-450" />
+                      <span>Profile Settings</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="my-1.5 bg-gray-50" />
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="text-red-600 focus:text-red-600 flex items-center gap-2 cursor-pointer"
+                    className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700 transition-colors cursor-pointer"
                   >
-                    <FaSignOutAlt size={15} />
-                    Logout
+                    <FaSignOutAlt size={14} />
+                    <span>Sign Out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -146,31 +169,48 @@ export default function Navbar() {
 
           <div className="pt-2 border-t border-gray-100">
             {isLoggedIn ? (
-              <>
+              <div className="space-y-1">
+                <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-gray-50 rounded-xl">
+                  <Image
+                    src={getProfilePictureUrl(profilePicture) || defaultProfile}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover border border-gray-200"
+                    unoptimized={!!profilePicture}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-gray-800 truncate">{user?.fullName || "Coordinator"}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email || ""}</p>
+                  </div>
+                </div>
                 <Link
                   href="/coordinator/dashboard"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                 >
-                  <FaTachometerAlt size={14} /> Dashboard
+                  <FaTachometerAlt size={15} className="text-gray-400" />
+                  <span>Dashboard</span>
                 </Link>
                 <Link
                   href="/coordinator/profile"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                 >
-                  <FaUser size={14} /> Profile
+                  <FaUser size={15} className="text-gray-400" />
+                  <span>Profile Settings</span>
                 </Link>
                 <button
                   onClick={() => {
                     setMenuOpen(false);
                     handleLogout();
                   }}
-                  className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50"
+                  className="flex items-center gap-2.5 w-full px-4 py-2.5 rounded-xl text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
                 >
-                  <FaSignOutAlt size={14} /> Logout
+                  <FaSignOutAlt size={15} className="text-red-500" />
+                  <span>Sign Out</span>
                 </button>
-              </>
+              </div>
             ) : (
               <Link
                 href="/login"

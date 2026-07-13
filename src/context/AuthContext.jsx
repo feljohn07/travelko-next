@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
     role: null,
     user: null,
     profilePicture: null,
+    isLoading: true,
   });
 
   // Read from localStorage or sessionStorage on mount (client-side only)
@@ -39,7 +40,14 @@ export function AuthProvider({ children }) {
           }
         })(),
         profilePicture: storage.getItem("profilePicture"),
+        isLoading: false,
       });
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAuth((prev) => ({
+        ...prev,
+        isLoading: false,
+      }));
     }
   }, []);
 
@@ -59,7 +67,7 @@ export function AuthProvider({ children }) {
     if (profilePicture) {
       storage.setItem("profilePicture", profilePicture);
     }
-    setAuth({ isLoggedIn: true, token, role, user, profilePicture });
+    setAuth({ isLoggedIn: true, token, role, user, profilePicture, isLoading: false });
   };
 
   const logout = () => {
@@ -79,6 +87,7 @@ export function AuthProvider({ children }) {
       role: null,
       user: null,
       profilePicture: null,
+      isLoading: false,
     });
   };
 

@@ -7,11 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FaUserClock, FaEnvelope, FaPhone, FaVenusMars, FaMapMarkerAlt, FaFileAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function CoordinatorApplicationsPage() {
   const { token } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
 
   const fetchApplications = async () => {
     try {
@@ -142,47 +144,14 @@ export default function CoordinatorApplicationsPage() {
                   </div>
 
                   {/* ID Attachment Uploads */}
-                  {a.idImageUrl && (
-                    <div className="pt-2">
-                      <span className="font-bold text-gray-700 text-xs flex items-center gap-1 mb-2">
-                        <FaFileAlt className="text-primary" /> Submitted Identification Card(s):
-                      </span>
-                      <div className="flex gap-3 flex-wrap">
-                        {Array.isArray(a.idImageUrl) ? (
-                          a.idImageUrl.map((url, idx) => (
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              key={idx}
-                              className="block relative rounded-xl border border-gray-200 overflow-hidden hover:opacity-90 transition-opacity"
-                            >
-                              <img
-                                src={url}
-                                alt={`ID Attachment ${idx + 1}`}
-                                className="h-16 w-28 object-cover bg-gray-50"
-                              />
-                            </a>
-                          ))
-                        ) : typeof a.idImageUrl === "string" && a.idImageUrl.trim() !== "" ? (
-                          <a
-                            href={a.idImageUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block relative rounded-xl border border-gray-200 overflow-hidden hover:opacity-90 transition-opacity"
-                          >
-                            <img
-                              src={a.idImageUrl}
-                              alt="ID Attachment"
-                              className="h-16 w-28 object-cover bg-gray-50"
-                            />
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 text-[11px] italic">No ID uploaded</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => setSelectedApp(a)}
+                      className="font-bold text-primary hover:text-brand-dark text-xs flex items-center gap-1.5 hover:underline cursor-pointer focus:outline-none"
+                    >
+                      <FaFileAlt /> view submitted valid id
+                    </button>
+                  </div>
 
                   {/* Action Buttons */}
                   <div className="flex gap-2.5 pt-3 border-t border-gray-50 mt-3">
@@ -206,6 +175,91 @@ export default function CoordinatorApplicationsPage() {
           ))}
         </div>
       )}
+
+      {/* Verification Dialog */}
+      <Dialog open={!!selectedApp} onOpenChange={(open) => !open && setSelectedApp(null)}>
+        <DialogContent className="sm:max-w-md p-6 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-bold text-lg text-gray-900 pb-2 border-b border-gray-150">
+              Submitted Verification Documents
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedApp && (
+            <div className="space-y-6 py-4">
+              {/* Profile Image Section */}
+              <div className="flex flex-col items-center text-center space-y-3">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-gray-400 self-start">
+                  Profile Image
+                </h5>
+                {selectedApp.profileImageUrl ? (
+                  <img
+                    src={selectedApp.profileImageUrl}
+                    alt="Profile"
+                    className="rounded-full object-cover border-2 border-primary/20 shadow-md w-28 h-28"
+                  />
+                ) : (
+                  <div className="rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-3xl w-28 h-28 shadow-sm">
+                    {(selectedApp.fullName || selectedApp.name || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="font-extrabold text-gray-900 text-base">
+                  {selectedApp.fullName || selectedApp.name}
+                </span>
+              </div>
+
+              {/* ID Image Section */}
+              <div className="space-y-3 border-t border-gray-100 pt-4">
+                <h5 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                  Valid ID Image
+                </h5>
+                <div className="flex flex-col gap-3">
+                  {Array.isArray(selectedApp.idImageUrl) && selectedApp.idImageUrl.length > 0 ? (
+                    selectedApp.idImageUrl.map((url, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block relative rounded-xl border border-gray-200 overflow-hidden hover:opacity-95 transition-opacity bg-gray-50 shadow-sm"
+                        >
+                          <img
+                            src={url}
+                            alt={`ID Attachment ${idx + 1}`}
+                            className="w-full max-h-60 object-contain mx-auto"
+                          />
+                        </a>
+                        <p className="text-[10px] text-gray-400 text-center">Click image to view full size</p>
+                      </div>
+                    ))
+                  ) : typeof selectedApp.idImageUrl === "string" && selectedApp.idImageUrl.trim() !== "" ? (
+                    <div className="space-y-1">
+                      <a
+                        href={selectedApp.idImageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block relative rounded-xl border border-gray-200 overflow-hidden hover:opacity-95 transition-opacity bg-gray-50 shadow-sm"
+                      >
+                        <img
+                          src={selectedApp.idImageUrl}
+                          alt="ID Attachment"
+                          className="w-full max-h-60 object-contain mx-auto"
+                        />
+                      </a>
+                      <p className="text-[10px] text-gray-400 text-center">Click image to view full size</p>
+                    </div>
+                  ) : (
+                    <div className="py-6 flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                      <FaFileAlt size={24} className="text-gray-300 mb-2" />
+                      <span className="text-gray-400 text-xs italic">No ID uploaded</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

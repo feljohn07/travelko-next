@@ -6,19 +6,19 @@ import { useAuth } from "@/context/AuthContext";
 import CoordinatorNav from "@/components/CoordinatorNav";
 
 export default function CoordinatorLayout({ children }) {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isLoading } = useAuth();
   const router = useRouter();
 
   // Collapsed state default true matching original Vite project
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn) {
+    if (!isLoading && !isLoggedIn) {
       router.replace("/login");
     }
-  }, [isLoggedIn, router]);
+  }, [isLoggedIn, isLoading, router]);
 
-  if (!isLoggedIn) {
+  if (isLoading || !isLoggedIn) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
