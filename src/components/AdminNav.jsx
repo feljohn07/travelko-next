@@ -13,6 +13,7 @@ import {
   FaSignOutAlt,
   FaCalendarAlt,
   FaBars,
+  FaFileInvoiceDollar,
 } from "react-icons/fa";
 
 const MENU_ITEMS = [
@@ -20,6 +21,7 @@ const MENU_ITEMS = [
   { label: "Coordinators", href: "/admin/coordinators", icon: FaUsers },
   { label: "Bookings", href: "/admin/booking-applications", icon: FaCalendarAlt },
   { label: "Coordinator Applications", href: "/admin/applications", icon: FaUserCheck },
+  { label: "Accounting", href: "/admin/accounting", icon: FaFileInvoiceDollar },
 ];
 
 export default function AdminNav() {

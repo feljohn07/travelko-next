@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaShareAlt, FaStar, FaMapMarkerAlt, FaClock } from "react-icons/fa";
+import { FaShareAlt, FaStar, FaMapMarkerAlt, FaClock, FaCalendarAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const normalize = (str = "") => String(str).trim().toLowerCase();
 
@@ -46,12 +48,13 @@ export default function ToursClient({ initialTours, initialCategory }) {
   const router = useRouter();
 
   // Filters State
-  const [date, setDate] = useState("");
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
   const [location, setLocation] = useState("");
   const [adventureType, setAdventureType] = useState(initialCategory || "all");
 
   const clearAll = () => {
-    setDate("");
+    setDateRange([null, null]);
     setLocation("");
     setAdventureType("all");
   };
@@ -61,7 +64,6 @@ export default function ToursClient({ initialTours, initialCategory }) {
 
     const qLocation = normalize(location);
     const qType = normalize(adventureType);
-    const qDate = normalize(date);
 
     if (qLocation) {
       list = list.filter((t) => normalize(t.address).includes(qLocation));
@@ -71,19 +73,26 @@ export default function ToursClient({ initialTours, initialCategory }) {
       list = list.filter((t) => normalize(t.category).includes(qType));
     }
 
-    if (qDate) {
+    if (startDate && endDate) {
       list = list.filter((t) => {
-        const parsed = parseAvailableDates(t.availableDates);
-        if (!parsed) return false;
+        if (!t.availableDates || t.availableDates.length === 0) return false;
 
-        const rangeText =
-          `${formatDate(parsed.start)} ${formatDate(parsed.end)}`.toLowerCase();
-        return rangeText.includes(qDate);
+        const searchStart = new Date(startDate);
+        searchStart.setHours(0, 0, 0, 0);
+
+        const searchEnd = new Date(endDate);
+        searchEnd.setHours(23, 59, 59, 999);
+
+        return t.availableDates.some((dateStr) => {
+          const tourDate = new Date(dateStr);
+          tourDate.setHours(0, 0, 0, 0);
+          return tourDate >= searchStart && tourDate <= searchEnd;
+        });
       });
     }
 
     return list;
-  }, [initialTours, location, adventureType, date]);
+  }, [initialTours, location, adventureType, startDate, endDate]);
 
   const copyTourLink = async (tourId) => {
     const url = `${window.location.origin}/tours/details/${tourId}`;
@@ -142,16 +151,22 @@ export default function ToursClient({ initialTours, initialCategory }) {
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">
                       Search by Date
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. May 1 - May 15"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400"
-                    />
-                    <span className="text-[10px] text-gray-450 block mt-1">
-                      Format: Month Day – Month Day
-                    </span>
+                    <div className="relative">
+                      <DatePicker
+                        selectsRange
+                        startDate={startDate}
+                        endDate={endDate}
+                        onChange={(update) => setDateRange(update)}
+                        placeholderText="Select date range"
+                        className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder-gray-400"
+                        dateFormat="MMM d, yyyy"
+                        isClearable={true}
+                        wrapperClassName="w-full"
+                      />
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <FaCalendarAlt size={14} />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Location Input */}

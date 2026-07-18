@@ -15,7 +15,6 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { QRCodeCanvas } from "qrcode.react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
@@ -523,21 +522,6 @@ function BookAdventureContent() {
           <p className="text-gray-400 text-xs mb-5 max-w-xs leading-normal">
             We will review and confirm your booking request details within <strong>24 hours</strong>.
           </p>
-
-          {/* QRCode Generator */}
-          {bookingRef && (
-            <div className="p-3 border border-gray-100 rounded-xl bg-white shadow-sm mb-2.5">
-              <QRCodeCanvas
-                value={`https://travelko.site/booking/${bookingRef}`}
-                size={140}
-                bgColor="#ffffff"
-                fgColor="#000000"
-                level="H"
-                includeMargin
-              />
-            </div>
-          )}
-          <span className="text-[10px] text-gray-400 font-semibold mb-3">Scan to view details</span>
           <span className="text-xs text-primary font-bold mb-6">Ref No: {bookingRef}</span>
 
           <div className="flex gap-2 w-full mt-2">
