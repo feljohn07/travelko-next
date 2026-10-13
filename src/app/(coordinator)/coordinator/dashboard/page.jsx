@@ -26,7 +26,7 @@ export default function CoordinatorDashboard() {
 
     const fetchCoordinatorStats = async () => {
       try {
-        const res = await api.get("auth/coordinator/stats");
+        const res = await api.get("/auth/coordinator/stats");
         const data = res.data;
 
         setStats({

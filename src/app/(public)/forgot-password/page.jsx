@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      await api.post("auth/coordinator/forgot-password", {
+      await api.post("/auth/coordinator/forgot-password", {
         email: email.trim(),
       });
 
@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
           </div>
           <h2 className="font-extrabold text-2xl">Forgot Password</h2>
           <p className="text-primary-foreground opacity-90 text-sm mt-1">
-            Enter your email and we'll send you a link to reset your password
+            Enter your email and we&apos;ll send you a link to reset your password
           </p>
         </div>
 

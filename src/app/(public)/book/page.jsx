@@ -87,7 +87,7 @@ function BookAdventureContent() {
 
     const fetchTour = async () => {
       try {
-        const res = await api.get("tours");
+        const res = await api.get("/tours");
         const allTours = res.data;
         const matchedTour = allTours.find(
           (t) => String(t._id) === String(tourId) || String(t.id) === String(tourId)
@@ -172,23 +172,28 @@ function BookAdventureContent() {
 
     setLoading(true);
 
+    const datesArray =
+      bookingType === "group"
+        ? dateRanges.map((d) => d.raw)
+        : [toLocalYYYYMMDD(selectedDate.start), toLocalYYYYMMDD(selectedDate.end)];
+
     const payload = {
       bookingType: bookingType === "group" ? "joiner" : "private",
       bookingIndividuals: bookingType === "group" ? people : 1,
-      bookingDateSelected:
-        bookingType === "group"
-          ? dateRanges.map((d) => d.raw)
-          : [toLocalYYYYMMDD(selectedDate.start), toLocalYYYYMMDD(selectedDate.end)],
-      paymentMethod: payment,
-      amount: String(totalAmount),
-      specialRequests: form.specialRequests,
+      tourDateSelected: datesArray,
+      bookingDateSelected: datesArray, // dual support for backward compatibility
+      paymentMethod: payment || "gcash",
+      specialRequests: form.specialRequests || "",
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       phoneNumber: formattedPhone,
+      accountName: form.accountName?.trim() || form.fullName.trim(),
+      refundMethod: form.refundMethod || payment || "gcash",
+      accountNumber: form.accountNumber?.trim() || formattedPhone,
     };
 
     try {
-      const res = await api.post(`booking/${tourId}`, payload);
+      const res = await api.post(`/booking/${tourId}`, payload);
       if (res.data && typeof res.data === "string" && res.data.startsWith("http")) {
         window.open(res.data, "_blank");
       }

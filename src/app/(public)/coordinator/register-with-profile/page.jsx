@@ -401,7 +401,7 @@ export default function CoordinatorRegisterPage() {
         fd.append("idPictures", idPicture);
       }
 
-      await api.post("auth/coordinator", fd);
+      await api.post("/auth/coordinator", fd);
 
       setSuccessOpen(true);
 

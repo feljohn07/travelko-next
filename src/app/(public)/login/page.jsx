@@ -41,7 +41,7 @@ export default function LoginPage() {
 
     try {
       const loginEndpoint =
-        role === "admin" ? "auth/admin/login" : "auth/coordinator/login";
+        role === "admin" ? "/auth/admin/login" : "/auth/coordinator/login";
 
       const res = await api.post(loginEndpoint, { username, password });
       const data = res.data;

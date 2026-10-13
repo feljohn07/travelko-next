@@ -49,7 +49,7 @@ export default function CoordinatorResetPasswordPage({ params }) {
     setError("");
 
     try {
-      await api.post(`auth/coordinator/reset-password/${token}`, {
+      await api.post(`/auth/coordinator/reset-password/${token}`, {
         newPassword: password,
       });
 

@@ -196,7 +196,7 @@ export default function CoordinatorTours() {
 
   const fetchMyTours = async () => {
     try {
-      const res = await api.get("tours/my-tours");
+      const res = await api.get("/tours/my-tours");
       setTours(res.data || []);
     } catch (err) {
       console.error(err);
@@ -289,7 +289,7 @@ export default function CoordinatorTours() {
     const delayDebounce = setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
-        const res = await api.get("location/suggestions", {
+        const res = await api.get("/location/suggestions", {
           params: { place: form.address },
         });
         const list = Array.isArray(res.data) ? res.data.filter(Boolean) : [];
@@ -378,7 +378,7 @@ export default function CoordinatorTours() {
 
     try {
       if (isEdit && editingTourId) {
-        await api.put(`tours/update/${editingTourId}`, fd);
+        await api.put(`/tours/update/${editingTourId}`, fd);
         toast.update(toastId, {
           render: "✏️ Tour package updated successfully",
           type: "success",
@@ -386,7 +386,7 @@ export default function CoordinatorTours() {
           autoClose: 2000,
         });
       } else {
-        await api.post("tours/create", fd);
+        await api.post("/tours/create", fd);
         toast.update(toastId, {
           render: "🎉 Tour package published successfully",
           type: "success",
@@ -429,7 +429,7 @@ export default function CoordinatorTours() {
                 setTours((prev) => prev.filter((t) => (t._id || t.id) !== tourId));
 
                 try {
-                  await api.delete(`tours/${tourId}`);
+                  await api.delete(`/tours/${tourId}`);
                   toast.success("🗑️ Tour package deleted.");
                 } catch (error) {
                   setTours(snapshot);

@@ -38,7 +38,7 @@ function BookPrivateTourContent() {
 
     const fetchTour = async () => {
       try {
-        const res = await api.get("tours");
+        const res = await api.get("/tours");
         const matched = res.data.find(
           (t) => String(t._id) === String(tourId) || String(t.id) === String(tourId)
         );
@@ -106,21 +106,23 @@ function BookPrivateTourContent() {
       formattedPhone = "+63" + cleanPhone;
     }
 
-    setLoading(true);
     const payload = {
       bookingType: "private",
       bookingIndividuals: 1,
-      bookingDateSelected: [selectedDate],
+      tourDateSelected: [selectedDate],
+      bookingDateSelected: [selectedDate], // dual support
       paymentMethod: "gcash", // Default private demo payment
-      amount: String(tour.price),
-      specialRequests: notes,
+      specialRequests: notes || "",
       fullName: fullName.trim(),
       email: email.trim(),
       phoneNumber: formattedPhone,
+      accountName: fullName.trim(),
+      refundMethod: "gcash",
+      accountNumber: formattedPhone,
     };
 
     try {
-      const res = await api.post(`booking/${tour.id}`, payload);
+      const res = await api.post(`/booking/${tour.id}`, payload);
       if (res.data && typeof res.data === "string" && res.data.startsWith("http")) {
         window.open(res.data, "_blank");
       }

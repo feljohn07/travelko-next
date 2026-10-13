@@ -109,7 +109,7 @@ export default function BookingsPage() {
     try {
       setLoading(true);
       const endpoint =
-        activeTab === "joiner" ? "booking/tours/joiners" : "booking/tours/private";
+        activeTab === "joiner" ? "/booking/tours/joiners" : "/booking/tours/private";
 
       const res = await api.get(endpoint);
       const data = Array.isArray(res.data) ? res.data : [];

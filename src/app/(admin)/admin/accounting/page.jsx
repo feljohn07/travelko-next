@@ -242,7 +242,7 @@ export default function AccountingPage() {
                 ))}
                 {filteredSales.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="py-8 text-center text-gray-400">No tours found matching "{searchTerm}"</td>
+                    <td colSpan="5" className="py-8 text-center text-gray-400">No tours found matching &quot;{searchTerm}&quot;</td>
                   </tr>
                 )}
               </tbody>
@@ -289,7 +289,7 @@ export default function AccountingPage() {
                 ))}
                 {filteredTransactions.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="py-8 text-center text-gray-400">No transactions found matching "{searchTerm}"</td>
+                    <td colSpan="7" className="py-8 text-center text-gray-400">No transactions found matching &quot;{searchTerm}&quot;</td>
                   </tr>
                 )}
               </tbody>
@@ -332,7 +332,7 @@ export default function AccountingPage() {
                 ))}
                 {filteredRevenue.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="py-8 text-center text-gray-400">No records found matching "{searchTerm}"</td>
+                    <td colSpan="6" className="py-8 text-center text-gray-400">No records found matching &quot;{searchTerm}&quot;</td>
                   </tr>
                 )}
               </tbody>
@@ -389,7 +389,7 @@ export default function AccountingPage() {
                 ))}
                 {filteredBookings.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="py-8 text-center text-gray-400">No bookings found matching "{searchTerm}"</td>
+                    <td colSpan="8" className="py-8 text-center text-gray-400">No bookings found matching &quot;{searchTerm}&quot;</td>
                   </tr>
                 )}
               </tbody>

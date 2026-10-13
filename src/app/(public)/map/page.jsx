@@ -9,7 +9,7 @@ export default async function MapPage() {
   let tours = [];
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/"}tours`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/"}tours`,
       { next: { revalidate: 30 } } // ISR: validate every 30 seconds
     );
     if (res.ok) {

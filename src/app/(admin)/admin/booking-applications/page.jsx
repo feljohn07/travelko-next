@@ -122,7 +122,7 @@ export default function AdminBookingApplicationsPage() {
   const updatePrivateStatus = async (id, status) => {
     const toastId = toast.loading("Updating booking status...");
     try {
-      await api.put(`/booking/private/update-status/${id}`, { status });
+      await api.patch(`/dev/bookings/${id}/status`, { status });
 
       setBookings((prev) =>
         prev.map((b) => (b.id === id ? { ...b, status } : b))
@@ -149,7 +149,7 @@ export default function AdminBookingApplicationsPage() {
   const updateJoinerStatus = async (tourId, status) => {
     const toastId = toast.loading("Updating all joiner statuses...");
     try {
-      await api.patch(`/booking/joiner/update-status-to-paid/${tourId}`, {
+      await api.patch(`/dev/tours/${tourId}/status`, {
         status,
       });
 
@@ -161,7 +161,7 @@ export default function AdminBookingApplicationsPage() {
             status,
             raw: {
               ...b.raw,
-              bookings: b.raw.bookings.map((j) => ({ ...j, status })),
+              bookings: (b.raw.bookings || []).map((j) => ({ ...j, status })),
             },
           };
         })
@@ -174,7 +174,7 @@ export default function AdminBookingApplicationsPage() {
           status,
           raw: {
             ...prev.raw,
-            bookings: prev.raw.bookings.map((j) => ({ ...j, status })),
+            bookings: (prev.raw.bookings || []).map((j) => ({ ...j, status })),
           },
         };
       });
@@ -199,7 +199,7 @@ export default function AdminBookingApplicationsPage() {
   const updateSingleJoinerStatus = async (bookingId, status) => {
     const toastId = toast.loading("Processing client refund...");
     try {
-      await api.patch(`booking/update-status/${bookingId}`, {
+      await api.patch(`/booking/update-status-to-refunded/${bookingId}`, {
         status: "refunded",
       });
 
@@ -209,7 +209,7 @@ export default function AdminBookingApplicationsPage() {
           ...prev,
           raw: {
             ...prev.raw,
-            bookings: prev.raw.bookings.map((j) =>
+            bookings: (prev.raw.bookings || []).map((j) =>
               j.id === bookingId ? { ...j, status } : j
             ),
           },
@@ -217,22 +217,27 @@ export default function AdminBookingApplicationsPage() {
       });
 
       setBookings((prev) =>
-        prev.map((b) =>
-          b.id === selectedBooking.id
-            ? {
-                ...b,
-                status: computeJoinerTourStatus({
-                  bookings: b.raw.bookings.map((j) =>
-                    j.id === bookingId ? { ...j, status } : j
-                  ),
-                }),
-              }
-            : b
-        )
+        prev.map((b) => {
+          if (b.bookingType === "private" && b.id === bookingId) {
+            return { ...b, status: "refunded" };
+          }
+          if (b.raw?.bookings) {
+            return {
+              ...b,
+              raw: {
+                ...b.raw,
+                bookings: b.raw.bookings.map((j) =>
+                  j.id === bookingId ? { ...j, status } : j
+                ),
+              },
+            };
+          }
+          return b;
+        })
       );
 
       toast.update(toastId, {
-        render: "Client booking status refunded.",
+        render: "Client marked as refunded successfully",
         type: "success",
         isLoading: false,
         autoClose: 2000,
@@ -240,7 +245,7 @@ export default function AdminBookingApplicationsPage() {
     } catch (err) {
       console.error(err);
       toast.update(toastId, {
-        render: "Failed to process refund",
+        render: err?.response?.data?.message || "Failed to update refund status",
         type: "error",
         isLoading: false,
         autoClose: 3000,
@@ -417,6 +422,15 @@ export default function AdminBookingApplicationsPage() {
                         className="bg-primary hover:bg-brand-dark font-bold text-xs"
                       >
                         Mark as Paid
+                      </Button>
+                    )}
+                    {selectedBooking.status === "cancelled" && (
+                      <Button
+                        size="sm"
+                        onClick={() => updateSingleJoinerStatus(selectedBooking.id, "refunded")}
+                        className="bg-amber-600 hover:bg-amber-750 text-white font-bold text-xs"
+                      >
+                        Refund Private Client
                       </Button>
                     )}
                     {selectedBooking.status === "refunded" && (

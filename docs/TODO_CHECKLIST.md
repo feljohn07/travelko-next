@@ -21,8 +21,8 @@ pie title Master Task Distribution
 
 | Phase | Focus Area | Priority | Target Duration | Status |
 |---|---|---|---|---|
-| **Phase 1** | Immediate Defect & Contract Remediation | 🔴 **P0 (Critical)** | Days 1–3 | ⏳ Ready to Execute |
-| **Phase 2** | Manual QA Smoke Testing (Core User Flows) | 🟡 **P1 (High)** | Days 4–6 | ⏸️ Blocked by P0 |
+| **Phase 1** | Immediate Defect & Contract Remediation | 🔴 **P0 (Critical)** | Days 1–3 | ✅ Completed |
+| **Phase 2** | Manual QA Smoke Testing (Core User Flows) | 🟡 **P1 (High)** | Days 4–6 | 🚀 In Progress / Ready |
 | **Phase 3** | Core Lifecycle, Notifications & Payment Webhooks | 🟡 **P1 (High)** | Days 7–11 | 📋 Next Up |
 | **Phase 4** | Platform Governance & Review Moderation | 🔵 **P2 (Medium)** | Days 12–15 | 📋 Backlog |
 | **Phase 5** | **Computerized Accounting (CAS) & PDF Receipts** | ⚪ **P3 (Deprioritized)** | Deferred | ⏸️ On Hold |
@@ -36,41 +36,41 @@ pie title Master Task Distribution
 *Goal: Eliminate runtime 404 errors, fix broken API routes, and align client payloads with backend DTOs.*
 
 ### 1.1. Admin Booking Status Bug Fixes
-- [ ] **TASK-101: Fix Admin Client Refund Route (404)**
+- [x] **TASK-101: Fix Admin Client Refund Route (404)**
   - **File:** [`src/app/(admin)/admin/booking-applications/page.jsx:202`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(admin)/admin/booking-applications/page.jsx#L202)
   - **Problem:** Calls invalid relative path `booking/update-status/${bookingId}`.
   - **Fix:** Update to `PATCH /booking/update-status-to-refunded/${bookingId}` with `{ status: "refunded" }`.
-- [ ] **TASK-102: Fix Admin Private Booking Status Route (404)**
+- [x] **TASK-102: Fix Admin Private Booking Status Route (404)**
   - **File:** [`src/app/(admin)/admin/booking-applications/page.jsx:125`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(admin)/admin/booking-applications/page.jsx#L125)
   - **Problem:** Calls nonexistent endpoint `PUT /booking/private/update-status/${id}`.
   - **Fix:** If approving, route to `PUT /booking/private/approve/${id}`; if updating status, use `PATCH /dev/bookings/${id}/status` or backend admin route.
-- [ ] **TASK-103: Resolve Admin Bulk Joiner Update Route (404)**
+- [x] **TASK-103: Resolve Admin Bulk Joiner Update Route (404)**
   - **File:** [`src/app/(admin)/admin/booking-applications/page.jsx:152`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(admin)/admin/booking-applications/page.jsx#L152)
   - **Problem:** Calls nonexistent endpoint `PATCH /booking/joiner/update-status-to-paid/${tourId}`.
-  - **Fix:** Remove button or integrate with PayMongo payment verification webhook.
+  - **Fix:** Routed to `PATCH /dev/tours/${tourId}/status` and aligned with payment verification flow.
 
 ### 1.2. Public Booking DTO Alignment (`BookingRequestDto`)
-- [ ] **TASK-104: Fix Public Joiner Booking Payload**
+- [x] **TASK-104: Fix Public Joiner Booking Payload**
   - **File:** [`src/app/(public)/book/page.jsx:175-188`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(public)/book/page.jsx#L175-L188)
   - **Fix 1:** Rename key `bookingDateSelected` ➔ `tourDateSelected`.
   - **Fix 2:** Add required refund destination inputs: `accountName`, `refundMethod`, `accountNumber`.
   - **Fix 3:** Omit redundant `amount` field (derived server-side).
-- [ ] **TASK-105: Fix Private Booking Request Payload**
+- [x] **TASK-105: Fix Private Booking Request Payload**
   - **File:** [`src/app/(public)/tours/book-private/page.jsx:110-123`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(public)/tours/book-private/page.jsx#L110-L123)
   - **Fix 1:** Rename key `bookingDateSelected` ➔ `tourDateSelected`.
   - **Fix 2:** Provide `accountName`, `refundMethod`, `accountNumber`.
 
 ### 1.3. Architecture & Cleanup
-- [ ] **TASK-106: Harmonize Base API Gateway URL**
+- [x] **TASK-106: Harmonize Base API Gateway URL**
   - **File:** [`src/app/(public)/map/page.jsx:12`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(public)/map/page.jsx#L12)
   - **Problem:** Hardcoded fallback `https://api.travelkoph.com/`.
   - **Fix:** Change fallback to `https://api.travelko.site/` to match [`src/services/api.js`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/services/api.js#L5).
-- [ ] **TASK-107: Normalize Axios Request Leading Slashes**
+- [x] **TASK-107: Normalize Axios Request Leading Slashes**
   - **Files:** Across `src/app/` and `src/components/`
-  - **Fix:** Prepend leading `/` to relative calls (`auth/coordinator/login`, `tours/my-tours`, `location/suggestions`).
-- [ ] **TASK-108: Remove Orphaned Legacy Page**
+  - **Fix:** Prepend leading `/` to relative calls (`/auth/coordinator/login`, `/tours/my-tours`, `/location/suggestions`, etc.).
+- [x] **TASK-108: Remove Orphaned Legacy Page**
   - **File:** [`src/app/(admin)/admin/bookings/page.jsx`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(admin)/admin/bookings/page.jsx)
-  - **Fix:** Safely delete or archive this dead static mockup file.
+  - **Fix:** Deleted dead static mockup folder and file.
 
 ---
 

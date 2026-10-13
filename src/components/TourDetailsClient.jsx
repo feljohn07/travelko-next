@@ -81,14 +81,14 @@ export default function TourDetailsClient({ tour: initialTour, tourId }) {
     }
 
     try {
-      await api.post(`reviews/${tourId}`, {
+      await api.post(`/reviews/${tourId}`, {
         fullName: reviewForm.fullName,
         rating: String(reviewForm.rating),
         content: reviewForm.content,
       });
 
       // Refresh data
-      const res = await api.get(`tours/${tourId}`);
+      const res = await api.get(`/tours/${tourId}`);
       setTour((prev) => ({
         ...prev,
         reviews: Array.isArray(res.data.reviews) ? res.data.reviews : [],

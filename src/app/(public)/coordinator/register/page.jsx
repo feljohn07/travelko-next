@@ -55,7 +55,7 @@ export default function CoordinatorRegisterPage() {
     setPasswordError("");
 
     try {
-      await api.post("auth/coordinator", {
+      await api.post("/auth/coordinator", {
         fullName: form.fullName,
         username: form.username,
         email: form.email,

@@ -35,7 +35,7 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await api.get("auth/coordinator");
+      const res = await api.get("/auth/coordinator");
       const data = res.data;
 
       if (data) {
@@ -124,7 +124,7 @@ export default function ProfilePage() {
         idPictures.forEach((file) => fd.append("idPictures", file));
       }
 
-      const res = await api.put("auth/coordinator", fd);
+      const res = await api.put("/auth/coordinator", fd);
 
       // Update local storage and context picture if changed
       if (res.data?.profileImageUrl) {

@@ -1,6 +1,11 @@
+import path from 'path';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone', // optimized for VPS (Node.js) deployment
+  turbopack: {
+    root: path.resolve('.'),
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'api.travelkoph.com' },
