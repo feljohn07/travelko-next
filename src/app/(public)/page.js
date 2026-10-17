@@ -47,7 +47,7 @@ export default async function HomePage() {
   // Single fetch call resolving Bug #3 (duplicate API calls)
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/"}tours`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/"}tours`,
       { next: { revalidate: 60 } } // ISR: refresh cache every 60 seconds
     );
     if (res.ok) {
@@ -132,9 +132,9 @@ export default async function HomePage() {
 
           {featuredTours.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featuredTours.map((tour) => (
+              {featuredTours.map((tour, index) => (
                 <div
-                  key={tour._id || tour.id}
+                  key={`${tour._id || tour.id || 'featured'}-${index}`}
                   className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
                 >
                   {/* Card Image */}

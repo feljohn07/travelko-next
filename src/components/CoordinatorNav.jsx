@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import api from "@/services/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -25,11 +26,11 @@ const MENU_ITEMS = [
 ];
 
 const getProfilePictureUrl = (pic) => {
-  if (!pic) return null;
+  if (!pic || typeof pic !== "string") return null;
   if (pic.startsWith("http://") || pic.startsWith("https://") || pic.startsWith("data:")) {
     return pic;
   }
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/";
   const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   const cleanPic = pic.startsWith("/") ? pic : `/${pic}`;
   return `${cleanBase}${cleanPic}`;
@@ -38,7 +39,59 @@ const getProfilePictureUrl = (pic) => {
 export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { profilePicture, logout } = useAuth();
+  const { user, profilePicture, updateProfilePicture, updateUser, token, logout } = useAuth();
+
+  const [coordinatorName, setCoordinatorName] = useState(
+    user?.fullName || user?.name || user?.username || "Coordinator"
+  );
+  const [coordinatorPic, setCoordinatorPic] = useState(
+    profilePicture || user?.profileImageUrl || user?.profilePicture || null
+  );
+
+  useEffect(() => {
+    if (user?.fullName || user?.name || user?.username) {
+      setCoordinatorName(user.fullName || user.name || user.username);
+    }
+    if (user?.profileImageUrl || user?.profilePicture) {
+      setCoordinatorPic(user.profileImageUrl || user.profilePicture);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (profilePicture) {
+      setCoordinatorPic(profilePicture);
+    }
+  }, [profilePicture]);
+
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    api
+      .get("/auth/coordinator")
+      .then((res) => {
+        if (!isMounted || !res.data) return;
+        const data = res.data;
+        if (data.fullName) {
+          setCoordinatorName(data.fullName);
+        }
+        if (data.profileImageUrl) {
+          setCoordinatorPic(data.profileImageUrl);
+          if (!profilePicture && updateProfilePicture) {
+            updateProfilePicture(data.profileImageUrl);
+          }
+        }
+        if (updateUser && data.fullName) {
+          updateUser(data);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch coordinator profile for header:", err?.message);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -57,38 +110,57 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
   return (
     <>
       {/* ===== TOP BAR ===== */}
-      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-16 shadow-sm">
-        {/* Left: Mobile Avatar Button (acts as drawer toggle) */}
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 h-16 shadow-xs relative">
+        {/* Left: Mobile Menu Toggle Button */}
         <button
           onClick={() => setDrawerOpen(true)}
-          className="md:hidden relative h-10 w-10 focus:outline-none rounded-full cursor-pointer hover:opacity-90"
+          className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer"
           aria-label="Open mobile menu"
         >
-          <Image
-            src={getProfilePictureUrl(profilePicture) || defaultProfile}
-            alt="Coordinator"
-            width={40}
-            height={40}
-            className="rounded-full object-cover"
-            unoptimized={!!profilePicture}
-          />
-          <span className="absolute -bottom-1 -right-1 h-4 w-4 bg-primary border-2 border-white rounded-full flex items-center justify-center text-white text-[8px]">
-            ≡
-          </span>
+          <FaBars size={20} />
         </button>
 
         {/* Desktop Sidebar Spacer (takes the space of collapsed/expanded sidebar) */}
-        <div className="hidden md:block" style={{ width: collapsed ? 72 : 230 }} />
+        <div
+          className="hidden md:block shrink-0 transition-all duration-200"
+          style={{ width: collapsed ? 72 : 230 }}
+        />
 
         {/* Center: Brand name */}
-        <Link href="/" className="font-brand text-2xl text-primary font-normal hover:opacity-95 transition-opacity">
-          TravelKo
-        </Link>
-
-        {/* Right: Dashboard Status */}
-        <div className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
-          Coordinator
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <Link
+            href="/"
+            className="font-brand text-2xl text-primary font-normal hover:opacity-95 transition-opacity"
+          >
+            TravelKo
+          </Link>
         </div>
+
+        {/* Right: Coordinator Profile Widget */}
+        <Link
+          href="/coordinator/profile"
+          className="flex items-center gap-3 py-1.5 px-2.5 rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer"
+          title="Coordinator Profile"
+        >
+          <div className="relative w-10 h-10 shrink-0">
+            <Image
+              src={getProfilePictureUrl(coordinatorPic) || defaultProfile}
+              alt={coordinatorName}
+              fill
+              sizes="40px"
+              className="rounded-full object-cover border border-gray-200 shadow-2xs group-hover:border-primary transition-colors"
+              unoptimized={!!coordinatorPic}
+            />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="font-bold text-sm text-gray-800 leading-tight group-hover:text-primary transition-colors max-w-[120px] sm:max-w-[180px] md:max-w-[220px] truncate">
+              {coordinatorName}
+            </span>
+            <span className="text-xs text-gray-500 font-medium leading-tight">
+              Coordinator
+            </span>
+          </div>
+        </Link>
       </header>
 
       {/* ===== DESKTOP SIDEBAR ===== */}
@@ -172,17 +244,19 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           </SheetHeader>
           <div className="p-4 flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <Image
-                src={getProfilePictureUrl(profilePicture) || defaultProfile}
-                alt="Profile"
-                width={50}
-                height={50}
-                className="rounded-full object-cover border border-gray-200"
-                unoptimized={!!profilePicture}
-              />
-              <div>
-                <h6 className="font-bold text-gray-800">My Account</h6>
-                <p className="text-xs text-gray-500">Coordinator Dashboard</p>
+              <div className="relative w-12 h-12 shrink-0">
+                <Image
+                  src={getProfilePictureUrl(coordinatorPic) || defaultProfile}
+                  alt={coordinatorName}
+                  fill
+                  sizes="48px"
+                  className="rounded-full object-cover border border-gray-200"
+                  unoptimized={!!coordinatorPic}
+                />
+              </div>
+              <div className="min-w-0">
+                <h6 className="font-bold text-gray-800 truncate max-w-[170px]">{coordinatorName}</h6>
+                <p className="text-xs text-gray-500 font-medium">Coordinator</p>
               </div>
             </div>
 

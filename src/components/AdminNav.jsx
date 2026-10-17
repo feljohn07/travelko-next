@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import Image from "next/image";
+import defaultProfile from "@/assets/defaultUser.png";
 import {
   FaTachometerAlt,
   FaUsers,
@@ -24,10 +26,26 @@ const MENU_ITEMS = [
   { label: "Accounting", href: "/admin/accounting", icon: FaFileInvoiceDollar },
 ];
 
+const getProfilePictureUrl = (pic) => {
+  if (!pic || typeof pic !== "string") return null;
+  if (pic.startsWith("http://") || pic.startsWith("https://") || pic.startsWith("data:")) {
+    return pic;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/";
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPic = pic.startsWith("/") ? pic : `/${pic}`;
+  return `${cleanBase}${cleanPic}`;
+};
+
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, profilePicture, logout } = useAuth();
+
+  const adminName =
+    user?.fullName || user?.name || user?.username || "Administrator";
+  const adminPic =
+    profilePicture || user?.profileImageUrl || user?.profilePicture || null;
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -51,16 +69,37 @@ export default function AdminNav() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white focus:outline-none transition-colors"
+            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white focus:outline-none transition-colors cursor-pointer"
             aria-label="Open mobile menu"
           >
             <FaBars size={18} />
           </button>
-          <span className="font-bold text-base">Admin Panel</span>
+          <Link href="/" className="font-brand text-2xl text-primary font-normal hover:opacity-95 transition-opacity">
+            TravelKo
+          </Link>
         </div>
-        <Link href="/" className="font-brand text-2xl text-primary font-normal hover:opacity-95 transition-opacity">
-          TravelKo
-        </Link>
+
+        {/* Top Right Corner: Admin Profile */}
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-9 h-9 shrink-0">
+            <Image
+              src={getProfilePictureUrl(adminPic) || defaultProfile}
+              alt={adminName}
+              fill
+              sizes="36px"
+              className="rounded-full object-cover border border-gray-700"
+              unoptimized={!!adminPic}
+            />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="font-bold text-xs text-white leading-tight max-w-[110px] truncate">
+              {adminName}
+            </span>
+            <span className="text-[10px] text-gray-400 font-medium leading-tight">
+              Admin
+            </span>
+          </div>
+        </div>
       </header>
 
       {/* Desktop Sidebar */}
@@ -125,6 +164,22 @@ export default function AdminNav() {
             <SheetHeader className="p-4 border-b border-gray-800">
               <SheetTitle className="text-left font-bold text-lg text-white">Admin Menu</SheetTitle>
             </SheetHeader>
+            <div className="p-4 border-b border-gray-800 flex items-center gap-3">
+              <div className="relative w-12 h-12 shrink-0">
+                <Image
+                  src={getProfilePictureUrl(adminPic) || defaultProfile}
+                  alt={adminName}
+                  fill
+                  sizes="48px"
+                  className="rounded-full object-cover border border-gray-700"
+                  unoptimized={!!adminPic}
+                />
+              </div>
+              <div className="min-w-0">
+                <h6 className="font-bold text-sm text-white truncate max-w-[170px]">{adminName}</h6>
+                <p className="text-xs text-gray-400 font-medium">Admin</p>
+              </div>
+            </div>
             <div className="p-4">
               <nav className="flex flex-col gap-1.5">
                 {MENU_ITEMS.map(({ label, href, icon: Icon }) => {

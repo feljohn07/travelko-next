@@ -181,7 +181,6 @@ function BookAdventureContent() {
       bookingType: bookingType === "group" ? "joiner" : "private",
       bookingIndividuals: bookingType === "group" ? people : 1,
       tourDateSelected: datesArray,
-      bookingDateSelected: datesArray, // dual support for backward compatibility
       paymentMethod: payment || "gcash",
       specialRequests: form.specialRequests || "",
       fullName: form.fullName.trim(),

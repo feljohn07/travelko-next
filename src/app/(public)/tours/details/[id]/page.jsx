@@ -7,11 +7,11 @@ export default async function TourDetailsPage({ params }) {
   try {
     const [tourRes, allToursRes] = await Promise.all([
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/"}tours/${id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/"}tours/${id}`,
         { next: { revalidate: 10 } } // Refresh details every 10 seconds for real-time reviews
       ),
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/"}tours`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/"}tours`,
         { next: { revalidate: 60 } }
       ),
     ]);
@@ -48,12 +48,12 @@ export async function generateMetadata({ params }) {
   const { id } = await params;
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/"}tours/${id}`
+      `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/"}tours/${id}`
     );
     if (res.ok) {
       const tour = await res.json();
       return {
-        title: `${tour.title} — TravelKo`,
+        title: tour.title,
         description: tour.details?.slice(0, 160) || "Discover adventures.",
         openGraph: {
           images: tour.pictureUrls?.[0] ? [tour.pictureUrls[0]] : [],
@@ -63,5 +63,5 @@ export async function generateMetadata({ params }) {
   } catch {
     // Ignore meta load error
   }
-  return { title: "Adventure Details — TravelKo" };
+  return { title: "Adventure Details" };
 }

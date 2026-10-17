@@ -235,12 +235,12 @@ export default function ToursClient({ initialTours, initialCategory }) {
               </div>
 
               <div className="space-y-6">
-                {filteredTours.map((tour) => {
+                {filteredTours.map((tour, index) => {
                   const dates = parseAvailableDates(tour.availableDates);
 
                   return (
                     <div
-                      key={tour._id || tour.id}
+                      key={`${tour._id || tour.id || 'tour'}-${index}`}
                       className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col md:flex-row h-fit md:h-64"
                     >
                       {/* Image */}

@@ -27,7 +27,7 @@ const getProfilePictureUrl = (pic) => {
   if (pic.startsWith("http://") || pic.startsWith("https://") || pic.startsWith("data:")) {
     return pic;
   }
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelko.site/";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/";
   const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   const cleanPic = pic.startsWith("/") ? pic : `/${pic}`;
   return `${cleanBase}${cleanPic}`;

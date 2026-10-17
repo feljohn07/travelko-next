@@ -386,22 +386,56 @@ export default function CoordinatorRegisterPage() {
     setPasswordError("");
 
     try {
-      const fd = new FormData();
-      fd.append("fullName", form.fullName);
-      fd.append("username", form.username);
-      fd.append("email", form.email);
-      fd.append("gender", form.gender);
-      fd.append("phoneNumber", form.phoneNumber);
-      fd.append("password", form.password);
+      // 1. Create coordinator account via JSON payload matching CreateCoordinatorDto
+      await api.post("/auth/coordinator", {
+        fullName: form.fullName.trim(),
+        username: form.username.trim(),
+        email: form.email.trim(),
+        gender: form.gender,
+        phoneNumber: form.phoneNumber.trim(),
+        password: form.password,
+      });
 
-      if (profilePicture) {
-        fd.append("profilePicture", profilePicture);
-      }
-      if (idPicture) {
-        fd.append("idPictures", idPicture);
-      }
+      // 2. If profile picture or ID picture is attached, authenticate and upload via PUT /auth/coordinator
+      if (profilePicture || idPicture) {
+        try {
+          const loginRes = await api.post("/auth/coordinator/login", {
+            username: form.username.trim(),
+            password: form.password,
+          });
+          const token =
+            loginRes.data?.accessToken ||
+            loginRes.data?.token ||
+            loginRes.data?.data?.accessToken;
 
-      await api.post("/auth/coordinator", fd);
+          if (token) {
+            const fd = new FormData();
+            fd.append("fullName", form.fullName.trim());
+            fd.append("phoneNumber", form.phoneNumber.trim());
+            fd.append("email", form.email.trim());
+            fd.append("gender", form.gender);
+            fd.append("address", "");
+            fd.append("bankAccountName", "");
+            fd.append("bankName", "");
+            fd.append("bankAccountNumber", "");
+
+            if (profilePicture) {
+              fd.append("profilePicture", profilePicture);
+            }
+            if (idPicture) {
+              fd.append("idPictures", idPicture);
+            }
+
+            await api.put("/auth/coordinator", fd, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          }
+        } catch (uploadErr) {
+          console.warn("Account created, but photo upload encountered an issue:", uploadErr);
+        }
+      }
 
       setSuccessOpen(true);
 

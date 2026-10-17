@@ -16,6 +16,11 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { toast } from "react-toastify";
+import {
+  getTourTimeStatus,
+  getTourStatusBadgeClass,
+  parseAvailableDates,
+} from "@/lib/tourStatus";
 
 const normalizeToArray = (value) => {
   if (!value) return [];
@@ -40,9 +45,25 @@ export default function CoordinatorTours() {
   const suggestionsRef = useRef(null);
 
   const [tours, setTours] = useState([]);
+  const [statuses, setStatuses] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [tourFilter, setTourFilter] = useState("all");
+
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        const res = await api.get("/tours/all/statuses");
+        const list = Array.isArray(res.data) ? res.data : [];
+        setStatuses(list);
+      } catch (err) {
+        console.error("Failed to fetch tour statuses:", err);
+        setStatuses(["upcoming", "ongoing", "completed", "cancelled"]);
+      }
+    };
+
+    fetchStatuses();
+  }, []);
 
   const [dateRange, setDateRange] = useState([null, null]);
   const [startDate, endDate] = dateRange;
@@ -75,25 +96,6 @@ export default function CoordinatorTours() {
 
   const [isEdit, setIsEdit] = useState(false);
   const [editingTourId, setEditingTourId] = useState(null);
-
-  const getTourTimeStatus = (tour) => {
-    const dates = parseAvailableDates(tour.availableDates);
-    if (!dates.length) return "draft";
-
-    const today = new Date();
-    const start = new Date(dates[0].start);
-    const end = new Date(dates[0].end);
-
-    today.setHours(0, 0, 0, 0);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    if (today < start) return "upcoming";
-    if (today >= start && today <= end) return "ongoing";
-    if (today > end) return "completed";
-
-    return "draft";
-  };
 
   const toggleExpand = (id) => {
     setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -128,19 +130,6 @@ export default function CoordinatorTours() {
     }
 
     setOpen(true);
-  };
-
-  const parseAvailableDates = (availableDates) => {
-    if (!Array.isArray(availableDates) || availableDates.length === 0)
-      return [];
-
-    const dates = availableDates
-      .map((d) => new Date(d))
-      .filter((d) => !isNaN(d.getTime()));
-
-    if (dates.length === 0) return [];
-
-    return [{ start: dates[0], end: dates[dates.length - 1] }];
   };
 
   const formatDate = (date) =>
@@ -454,18 +443,7 @@ export default function CoordinatorTours() {
     return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "ongoing":
-        return "text-green-600 bg-green-50";
-      case "completed":
-        return "text-blue-600 bg-blue-50";
-      case "upcoming":
-        return "text-yellow-600 bg-yellow-50";
-      default:
-        return "text-gray-500 bg-gray-50";
-    }
-  };
+  const getStatusColor = getTourStatusBadgeClass;
 
   useEffect(() => {
     const days = getDaysBetween(startDate, endDate);
@@ -500,12 +478,14 @@ export default function CoordinatorTours() {
           <select
             value={tourFilter}
             onChange={(e) => setTourFilter(e.target.value)}
-            className="px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-white font-semibold text-gray-700 focus:outline-none"
+            className="px-3.5 py-2 text-xs rounded-xl border border-gray-200 bg-white font-semibold text-gray-700 focus:outline-none cursor-pointer capitalize"
           >
             <option value="all">All Packages</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
+            {statuses.map((s) => (
+              <option key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </option>
+            ))}
           </select>
 
           <Button
@@ -525,7 +505,8 @@ export default function CoordinatorTours() {
         {tours
           .filter((t) => {
             if (tourFilter === "all") return true;
-            return getTourTimeStatus(t) === tourFilter;
+            const currentStatus = getTourTimeStatus(t);
+            return currentStatus?.toLowerCase() === tourFilter.toLowerCase();
           })
           .map((t) => {
             const dates = parseAvailableDates(t.availableDates);

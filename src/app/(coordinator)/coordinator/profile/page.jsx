@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 
 export default function ProfilePage() {
-  const { token, updateProfilePicture } = useAuth();
+  const { token, updateProfilePicture, updateUser } = useAuth();
 
   const [newPassword, setNewPassword] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
@@ -41,6 +41,9 @@ export default function ProfilePage() {
       if (data) {
         // Sync profile image globally with context
         updateProfilePicture(data.profileImageUrl);
+        if (updateUser) {
+          updateUser(data);
+        }
       }
 
       // Bug #6 Fixed: dynamically check nested objects paymentDetails/payment/flat to load bank details correctly
@@ -129,6 +132,9 @@ export default function ProfilePage() {
       // Update local storage and context picture if changed
       if (res.data?.profileImageUrl) {
         updateProfilePicture(res.data.profileImageUrl);
+      }
+      if (updateUser) {
+        updateUser({ fullName: profile.fullName, email: profile.email, phoneNumber: profile.phoneNumber, address: profile.address });
       }
 
       setOriginalProfile(profile);

@@ -98,12 +98,34 @@ export function AuthProvider({ children }) {
     if (sessionStorage.getItem("profilePicture") !== null) {
       sessionStorage.setItem("profilePicture", url);
     }
-    setAuth((prev) => ({ ...prev, profilePicture: url }));
+    setAuth((prev) => ({
+      ...prev,
+      profilePicture: url,
+      user: prev.user ? { ...prev.user, profileImageUrl: url, profilePicture: url } : prev.user,
+    }));
+  };
+
+  const updateUser = (userData) => {
+    let storage = null;
+    if (typeof window !== "undefined") {
+      if (localStorage.getItem("auth_token")) {
+        storage = localStorage;
+      } else if (sessionStorage.getItem("auth_token")) {
+        storage = sessionStorage;
+      }
+    }
+    setAuth((prev) => {
+      const newUser = typeof userData === "function" ? userData(prev.user) : { ...(prev.user || {}), ...userData };
+      if (storage) {
+        storage.setItem("auth_user", JSON.stringify(newUser));
+      }
+      return { ...prev, user: newUser };
+    });
   };
 
   return (
     <AuthContext.Provider
-      value={{ ...auth, login, logout, updateProfilePicture }}
+      value={{ ...auth, login, logout, updateProfilePicture, updateUser }}
     >
       {children}
     </AuthContext.Provider>

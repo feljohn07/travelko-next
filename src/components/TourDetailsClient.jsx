@@ -83,7 +83,7 @@ export default function TourDetailsClient({ tour: initialTour, tourId }) {
     try {
       await api.post(`/reviews/${tourId}`, {
         fullName: reviewForm.fullName,
-        rating: String(reviewForm.rating),
+        rating: Number(reviewForm.rating),
         content: reviewForm.content,
       });
 

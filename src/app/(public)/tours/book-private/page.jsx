@@ -110,7 +110,6 @@ function BookPrivateTourContent() {
       bookingType: "private",
       bookingIndividuals: 1,
       tourDateSelected: [selectedDate],
-      bookingDateSelected: [selectedDate], // dual support
       paymentMethod: "gcash", // Default private demo payment
       specialRequests: notes || "",
       fullName: fullName.trim(),

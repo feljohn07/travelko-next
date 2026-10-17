@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AdminNav from "@/components/AdminNav";
+import AdminHeader from "@/components/AdminHeader";
 
 /**
  * Admin route group layout — Bug Fix #1:
@@ -31,7 +32,10 @@ export default function AdminLayout({ children }) {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       <AdminNav />
-      <main className="flex-1 p-6 overflow-x-hidden">{children}</main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <AdminHeader />
+        <main className="flex-1 p-6 overflow-x-hidden">{children}</main>
+      </div>
     </div>
   );
 }
