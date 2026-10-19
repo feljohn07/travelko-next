@@ -5,6 +5,13 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/services/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { FaUser, FaIdCard, FaEye } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 export default function ProfilePage() {
@@ -12,7 +19,10 @@ export default function ProfilePage() {
 
   const [newPassword, setNewPassword] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
   const [idPictures, setIdPictures] = useState([]);
+  const [idPicturesPreview, setIdPicturesPreview] = useState([]);
+  const [previewModalImage, setPreviewModalImage] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,9 +38,31 @@ export default function ProfilePage() {
     bankAccountNumber: "",
     gcashNumber: "",
     gender: "",
+    profileImageUrl: "",
+    idImageUrl: [],
   });
 
   const [originalProfile, setOriginalProfile] = useState(null);
+
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setProfilePicture(file);
+    if (file) {
+      setProfilePicturePreview(URL.createObjectURL(file));
+    } else {
+      setProfilePicturePreview(null);
+    }
+  };
+
+  const handleIdPicturesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    setIdPictures(files);
+    if (files.length > 0) {
+      setIdPicturesPreview(files.map((file) => URL.createObjectURL(file)));
+    } else {
+      setIdPicturesPreview([]);
+    }
+  };
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -40,7 +72,9 @@ export default function ProfilePage() {
 
       if (data) {
         // Sync profile image globally with context
-        updateProfilePicture(data.profileImageUrl);
+        if (data.profileImageUrl) {
+          updateProfilePicture(data.profileImageUrl);
+        }
         if (updateUser) {
           updateUser(data);
         }
@@ -48,6 +82,18 @@ export default function ProfilePage() {
 
       // Bug #6 Fixed: dynamically check nested objects paymentDetails/payment/flat to load bank details correctly
       const paymentSource = data.paymentDetails || data.payment || data || {};
+
+      const rawIdImages =
+        data.idImageUrl ||
+        data.idImageUrls ||
+        data.idPictures ||
+        data.id_image_url ||
+        [];
+      const normalizedIdImages = Array.isArray(rawIdImages)
+        ? rawIdImages.filter(Boolean)
+        : typeof rawIdImages === "string" && rawIdImages.trim()
+        ? [rawIdImages.trim()]
+        : [];
 
       const loadedProfile = {
         fullName: data.fullName || "",
@@ -59,6 +105,8 @@ export default function ProfilePage() {
         bankAccountNumber: paymentSource.bankAccountNumber || paymentSource.accountNumber || "",
         gcashNumber: paymentSource.gcashNumber || "",
         gender: data.gender || "",
+        profileImageUrl: data.profileImageUrl || "",
+        idImageUrl: normalizedIdImages,
       };
 
       setProfile(loadedProfile);
@@ -94,7 +142,9 @@ export default function ProfilePage() {
     setIsEditing(false);
     setNewPassword("");
     setProfilePicture(null);
+    setProfilePicturePreview(null);
     setIdPictures([]);
+    setIdPicturesPreview([]);
     toast.info("Changes discarded");
   };
 
@@ -137,11 +187,14 @@ export default function ProfilePage() {
         updateUser({ fullName: profile.fullName, email: profile.email, phoneNumber: profile.phoneNumber, address: profile.address });
       }
 
-      setOriginalProfile(profile);
+      await fetchProfile();
+
       setIsEditing(false);
       setNewPassword("");
       setProfilePicture(null);
+      setProfilePicturePreview(null);
       setIdPictures([]);
+      setIdPicturesPreview([]);
 
       toast.update(toastId, {
         render: "✅ Profile updated successfully",
@@ -174,11 +227,26 @@ export default function ProfilePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-150">
-        <div>
-          <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-            Profile Settings
-          </h2>
-          <p className="text-gray-400 text-xs mt-0.5">Manage coordinator and banking credentials</p>
+        <div className="flex items-center gap-3.5">
+          <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex items-center justify-center">
+            {profile.profileImageUrl ? (
+              <img
+                src={profile.profileImageUrl}
+                alt={profile.fullName || "Coordinator"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <FaUser className="h-6 w-6 text-gray-300" />
+            )}
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">
+              {profile.fullName || "Profile Settings"}
+            </h2>
+            <p className="text-gray-400 text-xs mt-0.5">
+              {profile.email || "Manage coordinator and banking credentials"}
+            </p>
+          </div>
         </div>
 
         <div className="shrink-0">
@@ -327,43 +395,216 @@ export default function ProfilePage() {
 
         {/* Uploads and credentials password updates */}
         <Card className="rounded-2xl border-gray-100 shadow-sm bg-white overflow-hidden">
-          <CardContent className="p-6 space-y-4">
-            <h5 className="font-bold text-gray-900 text-base mb-2">Account Settings</h5>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Change Profile Picture</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={!isEditing}
-                    onChange={(e) => setProfilePicture(e.target.files[0])}
-                    className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 disabled:opacity-50"
-                  />
+          <CardContent className="p-6 space-y-6">
+            <div className="border-b border-gray-100 pb-3">
+              <h5 className="font-bold text-gray-900 text-base">Account Settings & Media</h5>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Review your uploaded documents, profile photo, and security credentials
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Profile Picture Column */}
+              <div className="space-y-4 p-4 rounded-xl bg-gray-50/70 border border-gray-150">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Profile Picture
+                  </label>
+                  {profilePicturePreview ? (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                      New Photo Selected
+                    </span>
+                  ) : profile.profileImageUrl ? (
+                    <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                      Active on File
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                      Not Uploaded
+                    </span>
+                  )}
+                </div>
+
+                {/* Display Current or Selected Profile Picture */}
+                <div className="flex items-center gap-4">
+                  <div className="relative h-20 w-20 shrink-0 rounded-2xl overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center">
+                    {profilePicturePreview ? (
+                      <img
+                        src={profilePicturePreview}
+                        alt="New Profile Preview"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : profile.profileImageUrl ? (
+                      <img
+                        src={profile.profileImageUrl}
+                        alt="Current Profile"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <FaUser className="h-8 w-8 text-gray-300" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-800">
+                      {profilePicturePreview
+                        ? "Preview of your new photo"
+                        : profile.profileImageUrl
+                        ? "Currently uploaded profile photo"
+                        : "No profile photo uploaded yet"}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      JPG, PNG or WEBP (Max 5MB)
+                    </p>
+                    {profile.profileImageUrl && !profilePicturePreview && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewModalImage(profile.profileImageUrl)}
+                        className="mt-1.5 text-[11px] font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <FaEye size={11} /> View full photo
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Update Valid ID</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    {isEditing ? "Choose New Profile Picture" : "Change Profile Picture (Enable edit mode)"}
+                  </label>
                   <input
                     type="file"
                     accept="image/*"
-                    multiple
                     disabled={!isEditing}
-                    onChange={(e) => setIdPictures(Array.from(e.target.files))}
-                    className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 disabled:opacity-50"
+                    onChange={handleProfilePictureChange}
+                    className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Change Password</label>
+              {/* Password Column */}
+              <div className="space-y-4 p-4 rounded-xl bg-gray-50/70 border border-gray-150 flex flex-col justify-between">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Security & Password
+                  </label>
+                  <p className="text-xs text-gray-400 mb-4">
+                    Leave blank if you do not wish to change your password.
+                  </p>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Enter new password"
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Valid ID Section */}
+            <div className="p-4 rounded-xl bg-gray-50/70 border border-gray-150 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Valid Identification Documents
+                  </label>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Government-issued ID submitted during registration or profile update
+                  </p>
+                </div>
+                {idPicturesPreview.length > 0 ? (
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                    {idPicturesPreview.length} New ID(s) Selected
+                  </span>
+                ) : profile.idImageUrl && profile.idImageUrl.length > 0 ? (
+                  <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                    {profile.idImageUrl.length} Verified Document(s) on File
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                    No ID on File
+                  </span>
+                )}
+              </div>
+
+              {/* Display Images */}
+              {idPicturesPreview.length > 0 ? (
+                <div>
+                  <p className="text-[11px] font-semibold text-amber-700 mb-2">
+                    Pending replacement uploads (will save when you click &quot;Save Changes&quot;):
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {idPicturesPreview.map((url, idx) => (
+                      <div
+                        key={idx}
+                        className="group relative rounded-xl border border-amber-200 overflow-hidden bg-white shadow-sm"
+                      >
+                        <img
+                          src={url}
+                          alt={`New ID Preview ${idx + 1}`}
+                          className="w-full h-28 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => setPreviewModalImage(url)}
+                        />
+                        <div className="p-1.5 text-center bg-amber-50/80 border-t border-amber-100">
+                          <span className="text-[10px] text-amber-800 font-medium">New ID #{idx + 1}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : profile.idImageUrl && profile.idImageUrl.length > 0 ? (
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-600 mb-2">
+                    Current Valid ID on file (Click to inspect full size):
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {profile.idImageUrl.map((url, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setPreviewModalImage(url)}
+                        className="group relative rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm cursor-pointer hover:border-primary transition-all hover:shadow-md"
+                      >
+                        <img
+                          src={url}
+                          alt={`Valid ID Document ${idx + 1}`}
+                          className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-200"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 text-white text-xs font-semibold">
+                          <FaEye size={12} /> View Full
+                        </div>
+                        <div className="p-1.5 text-center bg-gray-50 border-t border-gray-100">
+                          <span className="text-[10px] text-gray-600 font-medium">Document #{idx + 1}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 flex flex-col items-center justify-center border border-dashed border-gray-200 rounded-xl bg-white text-center">
+                  <FaIdCard className="text-gray-300 h-8 w-8 mb-1.5" />
+                  <p className="text-xs text-gray-500 font-medium">No valid ID currently on file</p>
+                  <p className="text-[11px] text-gray-400">Click &quot;Edit Profile&quot; to upload your government ID</p>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  {isEditing ? "Upload / Replace Valid ID (up to 5 images)" : "Update Valid ID (Enable edit mode to upload)"}
+                </label>
                 <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  type="file"
+                  accept="image/*"
+                  multiple
                   disabled={!isEditing}
-                  placeholder="Enter new password"
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  onChange={handleIdPicturesChange}
+                  className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -390,6 +631,36 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </form>
+
+      {/* Attachment Preview Modal */}
+      <Dialog open={!!previewModalImage} onOpenChange={() => setPreviewModalImage(null)}>
+        <DialogContent className="max-w-3xl p-3 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold text-gray-800">
+              Document Preview
+            </DialogTitle>
+          </DialogHeader>
+          {previewModalImage && (
+            <div className="p-2 flex flex-col items-center justify-center bg-gray-50 rounded-xl overflow-hidden">
+              <img
+                src={previewModalImage}
+                alt="Document Attachment Full View"
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-lg shadow-sm"
+              />
+              <div className="mt-3 flex justify-between w-full px-2 text-xs">
+                <a
+                  href={previewModalImage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-bold flex items-center gap-1"
+                >
+                  Open Original Image in New Tab ↗
+                </a>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
