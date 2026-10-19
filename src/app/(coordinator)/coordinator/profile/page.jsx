@@ -228,7 +228,7 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-150">
         <div className="flex items-center gap-3.5">
-          <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex items-center justify-center">
+          <div className="relative h-14 w-14 shrink-0 rounded-full aspect-square overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex items-center justify-center">
             {profile.profileImageUrl ? (
               <img
                 src={profile.profileImageUrl}
@@ -427,7 +427,7 @@ export default function ProfilePage() {
 
                 {/* Display Current or Selected Profile Picture */}
                 <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-20 shrink-0 rounded-2xl overflow-hidden border-2 border-white shadow-sm bg-gray-100 flex items-center justify-center">
+                  <div className="relative h-20 w-20 shrink-0 rounded-full aspect-square overflow-hidden border-2 border-white shadow-sm ring-2 ring-gray-150 bg-gray-100 flex items-center justify-center">
                     {profilePicturePreview ? (
                       <img
                         src={profilePicturePreview}

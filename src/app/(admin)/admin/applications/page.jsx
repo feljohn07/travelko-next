@@ -108,11 +108,13 @@ export default function CoordinatorApplicationsPage() {
                 {/* Profile Picture */}
                 <div className="shrink-0">
                   {a.profileImageUrl ? (
-                    <img
-                      src={a.profileImageUrl}
-                      alt="Profile"
-                      className="rounded-full object-cover border border-gray-100 shadow-sm w-20 h-20"
-                    />
+                    <div className="relative w-20 h-20 rounded-full aspect-square overflow-hidden shrink-0 border border-gray-100 shadow-sm">
+                      <img
+                        src={a.profileImageUrl}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-2xl w-20 h-20">
                       {(a.fullName || a.name || "?").charAt(0).toUpperCase()}
@@ -193,11 +195,13 @@ export default function CoordinatorApplicationsPage() {
                   Profile Image
                 </h5>
                 {selectedApp.profileImageUrl ? (
-                  <img
-                    src={selectedApp.profileImageUrl}
-                    alt="Profile"
-                    className="rounded-full object-cover border-2 border-primary/20 shadow-md w-28 h-28"
-                  />
+                  <div className="relative w-28 h-28 rounded-full aspect-square overflow-hidden shrink-0 border-2 border-primary/20 shadow-md">
+                    <img
+                      src={selectedApp.profileImageUrl}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-3xl w-28 h-28 shadow-sm">
                     {(selectedApp.fullName || selectedApp.name || "?").charAt(0).toUpperCase()}

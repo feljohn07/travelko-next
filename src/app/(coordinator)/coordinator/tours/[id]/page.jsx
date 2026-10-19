@@ -146,9 +146,34 @@ export default function CoordinatorTourDetailPage() {
   };
 
   useEffect(() => {
-    if (tourId) {
-      fetchTour();
-    }
+    if (!tourId) return;
+    let isMounted = true;
+
+    api
+      .get(`/tours/${tourId}`)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.data) {
+          setTour(res.data);
+          setError(null);
+        } else {
+          setError("Tour package not found.");
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        console.error("Failed to load tour details", err);
+        setError(
+          err.response?.data?.message || "Failed to load tour package details."
+        );
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [tourId]);
 
   // Open Edit Dialog

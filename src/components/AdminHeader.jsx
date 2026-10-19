@@ -33,13 +33,13 @@ export default function AdminHeader() {
 
       {/* Top right corner profile widget */}
       <div className="flex items-center gap-3 py-1.5 px-2.5 rounded-xl">
-        <div className="relative w-10 h-10 shrink-0">
+        <div className="relative w-10 h-10 shrink-0 rounded-full aspect-square overflow-hidden border border-gray-200 shadow-2xs">
           <Image
             src={getProfilePictureUrl(adminPic) || defaultProfile}
             alt={adminName}
             fill
             sizes="40px"
-            className="rounded-full object-cover border border-gray-200 shadow-2xs"
+            className="object-cover"
             unoptimized={!!adminPic}
           />
         </div>

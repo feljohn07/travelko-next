@@ -43,7 +43,6 @@ export function AuthProvider({ children }) {
         isLoading: false,
       });
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAuth((prev) => ({
         ...prev,
         isLoading: false,

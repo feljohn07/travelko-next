@@ -78,15 +78,17 @@ export default function Navbar() {
             {/* Auth area */}
             {isLoggedIn ? (
               <DropdownMenu>
-                <DropdownMenuTrigger className="ml-2 focus:outline-none">
-                  <Image
-                    src={getProfilePictureUrl(profilePicture) || defaultProfile}
-                    alt="Profile"
-                    width={38}
-                    height={38}
-                    className="rounded-full object-cover ring-2 ring-primary cursor-pointer hover:ring-4 transition-all"
-                    unoptimized={!!profilePicture}
-                  />
+                <DropdownMenuTrigger className="ml-2 focus:outline-none flex items-center justify-center rounded-full">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary hover:ring-4 transition-all shrink-0 cursor-pointer aspect-square">
+                    <Image
+                      src={getProfilePictureUrl(profilePicture) || defaultProfile}
+                      alt="Profile"
+                      fill
+                      sizes="40px"
+                      className="object-cover"
+                      unoptimized={!!profilePicture}
+                    />
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border border-gray-100 shadow-xl bg-white/95 backdrop-blur-md">
                   <div className="px-3 py-2.5 mb-1.5 border-b border-gray-50">
@@ -171,14 +173,16 @@ export default function Navbar() {
             {isLoggedIn ? (
               <div className="space-y-1">
                 <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-gray-50 rounded-xl">
-                  <Image
-                    src={getProfilePictureUrl(profilePicture) || defaultProfile}
-                    alt="Profile"
-                    width={40}
-                    height={40}
-                    className="rounded-full object-cover border border-gray-200"
-                    unoptimized={!!profilePicture}
-                  />
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-200 shrink-0 aspect-square">
+                    <Image
+                      src={getProfilePictureUrl(profilePicture) || defaultProfile}
+                      alt="Profile"
+                      fill
+                      sizes="40px"
+                      className="object-cover"
+                      unoptimized={!!profilePicture}
+                    />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold text-gray-800 truncate">{user?.fullName || "Coordinator"}</p>
                     <p className="text-xs text-gray-500 truncate">{user?.email || ""}</p>

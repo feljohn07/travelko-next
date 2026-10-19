@@ -41,27 +41,21 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
   const router = useRouter();
   const { user, profilePicture, updateProfilePicture, updateUser, token, logout } = useAuth();
 
-  const [coordinatorName, setCoordinatorName] = useState(
-    user?.fullName || user?.name || user?.username || "Coordinator"
-  );
-  const [coordinatorPic, setCoordinatorPic] = useState(
-    profilePicture || user?.profileImageUrl || user?.profilePicture || null
-  );
+  const [remoteCoordinator, setRemoteCoordinator] = useState(null);
 
-  useEffect(() => {
-    if (user?.fullName || user?.name || user?.username) {
-      setCoordinatorName(user.fullName || user.name || user.username);
-    }
-    if (user?.profileImageUrl || user?.profilePicture) {
-      setCoordinatorPic(user.profileImageUrl || user.profilePicture);
-    }
-  }, [user]);
+  const coordinatorName =
+    user?.fullName ||
+    user?.name ||
+    user?.username ||
+    remoteCoordinator?.fullName ||
+    "Coordinator";
 
-  useEffect(() => {
-    if (profilePicture) {
-      setCoordinatorPic(profilePicture);
-    }
-  }, [profilePicture]);
+  const coordinatorPic =
+    profilePicture ||
+    user?.profileImageUrl ||
+    user?.profilePicture ||
+    remoteCoordinator?.profileImageUrl ||
+    null;
 
   useEffect(() => {
     if (!token) return;
@@ -71,14 +65,9 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
       .then((res) => {
         if (!isMounted || !res.data) return;
         const data = res.data;
-        if (data.fullName) {
-          setCoordinatorName(data.fullName);
-        }
-        if (data.profileImageUrl) {
-          setCoordinatorPic(data.profileImageUrl);
-          if (!profilePicture && updateProfilePicture) {
-            updateProfilePicture(data.profileImageUrl);
-          }
+        setRemoteCoordinator(data);
+        if (data.profileImageUrl && !profilePicture && updateProfilePicture) {
+          updateProfilePicture(data.profileImageUrl);
         }
         if (updateUser && data.fullName) {
           updateUser(data);
@@ -91,7 +80,7 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, [token, profilePicture, updateProfilePicture, updateUser]);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -142,13 +131,13 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           className="flex items-center gap-3 py-1.5 px-2.5 rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer"
           title="Coordinator Profile"
         >
-          <div className="relative w-10 h-10 shrink-0">
+          <div className="relative w-10 h-10 shrink-0 rounded-full aspect-square overflow-hidden border border-gray-200 shadow-2xs group-hover:border-primary transition-colors">
             <Image
               src={getProfilePictureUrl(coordinatorPic) || defaultProfile}
               alt={coordinatorName}
               fill
               sizes="40px"
-              className="rounded-full object-cover border border-gray-200 shadow-2xs group-hover:border-primary transition-colors"
+              className="object-cover"
               unoptimized={!!coordinatorPic}
             />
           </div>
@@ -244,13 +233,13 @@ export default function CoordinatorNav({ collapsed, onToggleCollapsed }) {
           </SheetHeader>
           <div className="p-4 flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 shrink-0">
+              <div className="relative w-12 h-12 shrink-0 rounded-full aspect-square overflow-hidden border border-gray-200">
                 <Image
                   src={getProfilePictureUrl(coordinatorPic) || defaultProfile}
                   alt={coordinatorName}
                   fill
                   sizes="48px"
-                  className="rounded-full object-cover border border-gray-200"
+                  className="object-cover"
                   unoptimized={!!coordinatorPic}
                 />
               </div>

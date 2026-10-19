@@ -81,13 +81,13 @@ export default function AdminNav() {
 
         {/* Top Right Corner: Admin Profile */}
         <div className="flex items-center gap-2.5">
-          <div className="relative w-9 h-9 shrink-0">
+          <div className="relative w-9 h-9 shrink-0 rounded-full aspect-square overflow-hidden border border-gray-700">
             <Image
               src={getProfilePictureUrl(adminPic) || defaultProfile}
               alt={adminName}
               fill
               sizes="36px"
-              className="rounded-full object-cover border border-gray-700"
+              className="object-cover"
               unoptimized={!!adminPic}
             />
           </div>
@@ -165,13 +165,13 @@ export default function AdminNav() {
               <SheetTitle className="text-left font-bold text-lg text-white">Admin Menu</SheetTitle>
             </SheetHeader>
             <div className="p-4 border-b border-gray-800 flex items-center gap-3">
-              <div className="relative w-12 h-12 shrink-0">
+              <div className="relative w-12 h-12 shrink-0 rounded-full aspect-square overflow-hidden border border-gray-700">
                 <Image
                   src={getProfilePictureUrl(adminPic) || defaultProfile}
                   alt={adminName}
                   fill
                   sizes="48px"
-                  className="rounded-full object-cover border border-gray-700"
+                  className="object-cover"
                   unoptimized={!!adminPic}
                 />
               </div>

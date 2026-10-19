@@ -150,11 +150,13 @@ export default function CoordinatorDetailsPage({ params: paramsPromise }) {
           <CardContent className="p-6 space-y-4">
             <div className="flex flex-col items-center text-center pb-4 border-b border-gray-50">
               {coordinator.profileImageUrl ? (
-                <img
-                  src={coordinator.profileImageUrl}
-                  alt="Profile"
-                  className="rounded-full object-cover border shadow-sm w-24 h-24 mb-4"
-                />
+                <div className="relative w-24 h-24 rounded-full aspect-square overflow-hidden shrink-0 border shadow-sm mb-4">
+                  <img
+                    src={coordinator.profileImageUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className="rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-3xl w-24 h-24 mb-4">
                   {coordinator.fullName.charAt(0).toUpperCase()}
