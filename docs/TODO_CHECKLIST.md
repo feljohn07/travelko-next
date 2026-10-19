@@ -30,6 +30,9 @@ pie title Master Task Distribution
 > [!NOTE]
 > **Product Architecture Decision:** Automated Biometric / Face Scanning has been **permanently removed**. Coordinator account verification and onboarding follows a **100% Manual Confirmation & Approval** workflow conducted by platform administrators via [`/admin/applications`](file:///C:/Users/feljo/Desktop/TravelKo/travelko-next/src/app/(admin)/admin/applications/page.jsx).
 
+> [!TIP]
+> **Location Autocomplete Activated:** [Geoapify Location Autocomplete](file:///c:/Users/feljo/Desktop/TravelKo/travelko-next/docs/pending-features/GEOAPIFY_LOCATION_AUTOCOMPLETE.md) is now active and verified in `.env.local` with sub-150ms Philippine geo-targeted suggestions.
+
 ---
 
 ## 🔴 Phase 1: Immediate Defect & Contract Remediation (P0)

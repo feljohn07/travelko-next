@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/services/api";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +39,17 @@ const normalizeToArray = (value) => {
     }
   }
   return [];
+};
+
+const getImageUrl = (url) => {
+  if (!url || typeof url !== "string") return null;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.travelkoph.com/";
+  const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+  return `${cleanBase}${cleanUrl}`;
 };
 
 export default function CoordinatorTours() {
@@ -198,9 +211,9 @@ export default function CoordinatorTours() {
     const p = feature.properties;
     const parts = [
       p.street,
-      p.locality || p.district,
-      p.city,
-      p.state,
+      p.suburb || p.locality || p.district,
+      p.city || p.municipality,
+      p.state || p.county,
       p.country,
     ].filter(Boolean);
 
@@ -210,7 +223,7 @@ export default function CoordinatorTours() {
         uniqueParts.push(part);
       }
     });
-    return uniqueParts.join(", ");
+    return uniqueParts.join(", ") || p.formatted || "";
   };
 
   const handleSelectSuggestion = (item) => {
@@ -219,9 +232,9 @@ export default function CoordinatorTours() {
     const parts = [
       p.name,
       p.street,
-      p.locality || p.district,
-      p.city,
-      p.state,
+      p.suburb || p.locality || p.district,
+      p.city || p.municipality,
+      p.state || p.county,
       p.country,
     ].filter(Boolean);
 
@@ -231,7 +244,7 @@ export default function CoordinatorTours() {
         uniqueParts.push(part);
       }
     });
-    const formatted = uniqueParts.join(", ");
+    const formatted = uniqueParts.join(", ") || p.formatted || p.name || "";
 
     ignoreNextSearch.current = true;
     setForm((prev) => ({
@@ -278,18 +291,24 @@ export default function CoordinatorTours() {
     const delayDebounce = setTimeout(async () => {
       setSuggestionsLoading(true);
       try {
-        const res = await api.get("/location/suggestions", {
-          params: { place: form.address },
-        });
-        const list = Array.isArray(res.data) ? res.data.filter(Boolean) : [];
-        setSuggestions(list);
-        setShowSuggestions(list.length > 0);
+        const res = await fetch(
+          `/api/location/suggestions?place=${encodeURIComponent(form.address)}`
+        );
+        if (res.ok) {
+          const list = await res.json();
+          const cleanList = Array.isArray(list) ? list.filter(Boolean) : [];
+          setSuggestions(cleanList);
+          setShowSuggestions(cleanList.length > 0);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
       } catch (err) {
         console.error("Error fetching suggestions:", err);
       } finally {
         setSuggestionsLoading(false);
       }
-    }, 400);
+    }, 350);
 
     return () => clearTimeout(delayDebounce);
   }, [form.address]);
@@ -511,95 +530,105 @@ export default function CoordinatorTours() {
           .map((t) => {
             const dates = parseAvailableDates(t.availableDates);
             const tourStatus = getTourTimeStatus(t);
+            const pictures = normalizeToArray(t.pictureUrls);
+            const firstPic = pictures[0] ? getImageUrl(pictures[0]) : null;
 
             return (
-              <Card key={t._id || t.id} className="rounded-2xl border-gray-100 shadow-sm flex flex-col h-full bg-white overflow-hidden">
-                <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
-                  <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <h4 className="font-extrabold text-gray-900 text-base line-clamp-1">{t.title}</h4>
-                      <span className="inline-block mt-1.5 px-2.5 py-1 bg-brand-light text-primary text-[10px] font-bold rounded-lg leading-none">
-                        {t.category}
-                      </span>
+              <Link
+                key={t._id || t.id}
+                href={`/coordinator/tours/${t._id || t.id}`}
+                className="group block h-full focus:outline-none"
+              >
+                <Card className="rounded-2xl border-gray-100 shadow-sm flex flex-col h-full bg-white overflow-hidden transition-all duration-200 group-hover:shadow-md group-hover:border-primary/40 cursor-pointer">
+                  {firstPic ? (
+                    <div className="relative h-44 w-full bg-gray-100 overflow-hidden">
+                      <Image
+                        src={firstPic}
+                        alt={t.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        unoptimized
+                      />
+                      <div className="absolute top-3 right-3">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-xs ${getStatusColor(
+                            tourStatus
+                          )}`}
+                        >
+                          {tourStatus}
+                        </span>
+                      </div>
                     </div>
+                  ) : null}
 
-                    <div className="flex gap-2 shrink-0">
-                      {/* Bug #5 Fixed: disabled aligns check on tourStatus instead of stale t.status */}
-                      <button
-                        disabled={tourStatus !== "upcoming"}
-                        onClick={() => handleEdit(t)}
-                        className={`p-1.5 rounded-lg border transition-colors cursor-pointer focus:outline-none ${
-                          tourStatus === "upcoming"
-                            ? "border-gray-200 text-gray-500 hover:bg-gray-50"
-                            : "border-gray-100 text-gray-300 cursor-not-allowed"
-                        }`}
-                        title={tourStatus !== "upcoming" ? "Only upcoming packages can be edited" : "Edit Package"}
-                      >
-                        <FaEdit size={13} />
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(t._id || t.id)}
-                        className="p-1.5 rounded-lg border border-gray-200 text-red-500 hover:bg-red-50 transition-colors cursor-pointer focus:outline-none"
-                        title="Delete Package"
-                      >
-                        <FaTrash size={13} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-xs">
-                    <div className="grid grid-cols-[70px_1fr] gap-2">
-                      <span className="font-bold text-gray-400">Duration:</span>
-                      <span className="text-gray-700 font-medium">
-                        {dates.length > 0
-                          ? dates.map((d, i) => (
-                              <div key={i}>
-                                {formatDate(d.start)} – {formatDate(d.end)}
-                              </div>
-                            ))
-                          : "—"}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-[70px_1fr] gap-2">
-                      <span className="font-bold text-gray-400">Meetup:</span>
-                      <span className="text-gray-700 font-medium truncate">{t.address}</span>
-                    </div>
-
-                    <div className="grid grid-cols-[70px_1fr] gap-2">
-                      <span className="font-bold text-gray-400">Details:</span>
-                      <div className="text-gray-600 font-medium">
-                        <p className={expandedCards[t.id || t._id] ? "" : "line-clamp-2"}>
-                          {t.details}
-                        </p>
-                        {t.details && t.details.length > 80 && (
-                          <button
-                            onClick={() => toggleExpand(t.id || t._id)}
-                            className="text-primary font-bold text-[11px] hover:underline focus:outline-none cursor-pointer mt-1"
+                  <CardContent className="p-5 flex flex-col justify-between h-full space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-extrabold text-gray-900 text-base line-clamp-1 group-hover:text-primary transition-colors">
+                            {t.title}
+                          </h4>
+                          <span className="inline-block mt-1 px-2.5 py-0.5 bg-brand-light text-primary text-[10px] font-bold rounded-lg leading-none">
+                            {t.category}
+                          </span>
+                        </div>
+                        {!firstPic && (
+                          <span
+                            className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(
+                              tourStatus
+                            )}`}
                           >
-                            {expandedCards[t.id || t._id] ? "See less" : "See more"}
-                          </button>
+                            {tourStatus}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 text-xs">
+                        <div className="grid grid-cols-[70px_1fr] gap-2">
+                          <span className="font-bold text-gray-400">Duration:</span>
+                          <span className="text-gray-700 font-medium">
+                            {dates.length > 0
+                              ? dates.map((d, i) => (
+                                  <div key={i}>
+                                    {formatDate(d.start)} – {formatDate(d.end)}
+                                  </div>
+                                ))
+                              : "—"}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-[70px_1fr] gap-2">
+                          <span className="font-bold text-gray-400">Meetup:</span>
+                          <span className="text-gray-700 font-medium truncate">{t.address || "—"}</span>
+                        </div>
+
+                        {t.details && (
+                          <div className="grid grid-cols-[70px_1fr] gap-2">
+                            <span className="font-bold text-gray-400">Details:</span>
+                            <p className="text-gray-600 font-medium line-clamp-2">
+                              {t.details}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-50 text-xs">
-                    <div>
-                      <span className="text-gray-450 font-bold block">Rate</span>
-                      <span className="text-primary font-extrabold text-sm">
-                        ₱{Number(t.joinerPrice).toLocaleString()}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs">
+                      <div>
+                        <span className="text-gray-400 font-bold block text-[10px]">RATE</span>
+                        <span className="text-primary font-extrabold text-sm">
+                          ₱{Number(t.joinerPrice || 0).toLocaleString()}
+                        </span>
+                        <span className="text-gray-400 text-[10px]"> ({t.joinerMaxSlots} slots)</span>
+                      </div>
+
+                      <span className="text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                        Manage Package &rarr;
                       </span>
-                      <span className="text-gray-400 text-[10px]"> ({t.joinerMaxSlots} slots)</span>
                     </div>
-
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(tourStatus)}`}>
-                      {tourStatus}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
       </div>
@@ -678,9 +707,18 @@ export default function CoordinatorTours() {
               </div>
 
               {showSuggestions && suggestions.length > 0 && (
-                <ul className="absolute z-50 w-full mt-1.5 max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg focus:outline-none py-1.5 scrollbar-thin">
+                <ul className="absolute z-50 w-full mt-1.5 max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg focus:outline-none py-1 scrollbar-thin">
                   {suggestions.map((item, idx) => {
                     const addr = formatAddressDetail(item);
+                    const title =
+                      item.properties?.name ||
+                      item.properties?.formatted ||
+                      "Unknown Location";
+                    const tag =
+                      item.properties?.result_type ||
+                      item.properties?.type ||
+                      item.properties?.category;
+
                     return (
                       <li
                         key={idx}
@@ -689,7 +727,7 @@ export default function CoordinatorTours() {
                       >
                         <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                           <span className="font-bold text-gray-900 text-sm truncate">
-                            {item.properties?.name || "Unknown Place"}
+                            {title}
                           </span>
                           {addr && (
                             <span className="text-gray-500 text-xs truncate">
@@ -697,14 +735,26 @@ export default function CoordinatorTours() {
                             </span>
                           )}
                         </div>
-                        {item.properties?.type && (
+                        {tag && (
                           <span className="shrink-0 px-2 py-0.5 bg-gray-100 text-gray-400 rounded-lg text-[9px] font-extrabold uppercase tracking-wider">
-                            {item.properties.type}
+                            {tag}
                           </span>
                         )}
                       </li>
                     );
                   })}
+                  <li className="px-4 py-1.5 text-[10px] text-gray-400 bg-gray-50 flex items-center justify-between border-t border-gray-100 rounded-b-xl">
+                    <span>Philippines Search</span>
+                    <a
+                      href="https://www.geoapify.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline text-gray-500 font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Powered by Geoapify & OSM
+                    </a>
+                  </li>
                 </ul>
               )}
             </div>
