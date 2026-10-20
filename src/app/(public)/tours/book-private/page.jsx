@@ -26,6 +26,9 @@ function BookPrivateTourContent() {
   const [phone, setPhone] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [refundMethod, setRefundMethod] = useState("gcash");
+  const [accountNumber, setAccountNumber] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -81,6 +84,14 @@ function BookPrivateTourContent() {
       toast.warning("Please select a date.");
       return;
     }
+    if (!accountName.trim()) {
+      toast.warning("Please enter your refund account name.");
+      return;
+    }
+    if (!accountNumber.trim()) {
+      toast.warning("Please enter your refund account or wallet number.");
+      return;
+    }
     if (!agree) {
       toast.warning("You must agree to the Terms & Conditions.");
       return;
@@ -115,9 +126,9 @@ function BookPrivateTourContent() {
       fullName: fullName.trim(),
       email: email.trim(),
       phoneNumber: formattedPhone,
-      accountName: fullName.trim(),
-      refundMethod: "gcash",
-      accountNumber: formattedPhone,
+      accountName: accountName.trim() || fullName.trim(),
+      refundMethod: refundMethod || "gcash",
+      accountNumber: accountNumber.trim() || formattedPhone,
     };
 
     try {
@@ -284,6 +295,78 @@ function BookPrivateTourContent() {
                     className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary resize-none disabled:opacity-50"
                   />
                   <span className="text-[10px] text-gray-400 block mt-1">{notes.length}/500 Characters</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Refund Account Details */}
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h5 className="font-bold text-gray-900 text-sm">Refund Account Details</h5>
+                  <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
+                    For refunds in case of tour cancellation or rescheduling
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountName(fullName);
+                    setAccountNumber(phone);
+                  }}
+                  className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                >
+                  Same as contact info
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    Refund Account Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="e.g. Maria Santos"
+                    required
+                    disabled={loading}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Refund Method *
+                    </label>
+                    <select
+                      value={refundMethod}
+                      onChange={(e) => setRefundMethod(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+                    >
+                      <option value="gcash">gcash</option>
+                      <option value="bank">bank</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Refund Account Number *
+                    </label>
+                    <input
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder={refundMethod === "gcash" ? "e.g. 09181234567" : "Bank account number"}
+                      required
+                      disabled={loading}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary disabled:opacity-50"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

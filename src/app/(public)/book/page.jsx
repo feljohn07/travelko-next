@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   FaUsers,
   FaUserFriends,
-  FaMoneyBillWave,
-  FaUniversity,
   FaCheckCircle,
   FaCalendarAlt,
 } from "react-icons/fa";
@@ -69,6 +67,9 @@ function BookAdventureContent() {
     phoneNumber: "",
     address: "",
     specialRequests: "",
+    accountName: "",
+    refundMethod: "gcash",
+    accountNumber: "",
   });
 
   const selectedDate =
@@ -125,6 +126,15 @@ function BookAdventureContent() {
   const onChange = (key) => (e) =>
     setForm((p) => ({ ...p, [key]: e.target.value }));
 
+  const handleCopyContactToRefund = () => {
+    setForm((p) => ({
+      ...p,
+      accountName: p.fullName || p.accountName,
+      accountNumber: p.phoneNumber || p.accountNumber,
+      refundMethod: payment || p.refundMethod || "gcash",
+    }));
+  };
+
   const unitPrice =
     bookingType === "group"
       ? Number(tour?.joinerPrice || 0)
@@ -163,6 +173,16 @@ function BookAdventureContent() {
       return;
     }
 
+    if (!form.accountName || !form.accountName.trim()) {
+      toast.warning("Please enter your refund account name.");
+      return;
+    }
+
+    if (!form.accountNumber || !form.accountNumber.trim()) {
+      toast.warning("Please enter your refund account or mobile number.");
+      return;
+    }
+
     let formattedPhone = cleanPhone;
     if (cleanPhone.startsWith("0")) {
       formattedPhone = "+63" + cleanPhone.slice(1);
@@ -181,14 +201,14 @@ function BookAdventureContent() {
       bookingType: bookingType === "group" ? "joiner" : "private",
       bookingIndividuals: bookingType === "group" ? people : 1,
       tourDateSelected: datesArray,
-      paymentMethod: payment || "gcash",
+      paymentMethod: payment === "bank" ? "bank-transfer" : (payment || "gcash"),
       specialRequests: form.specialRequests || "",
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       phoneNumber: formattedPhone,
-      accountName: form.accountName?.trim() || form.fullName.trim(),
-      refundMethod: form.refundMethod || payment || "gcash",
-      accountNumber: form.accountNumber?.trim() || formattedPhone,
+      accountName: form.accountName.trim(),
+      refundMethod: form.refundMethod || "gcash",
+      accountNumber: form.accountNumber.trim(),
     };
 
     try {
@@ -419,28 +439,92 @@ function BookAdventureContent() {
               <CardContent className="p-6 space-y-3">
                 <h5 className="font-bold text-lg text-gray-900 mb-2">Payment Details</h5>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setPayment("gcash")}
-                    className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${
-                      payment === "gcash"
-                        ? "bg-primary border-primary text-white"
-                        : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                    }`}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    Payment Method <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={payment}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setPayment(val);
+                      if (!form.refundMethod || form.refundMethod === "gcash" || form.refundMethod === "bank") {
+                        setForm((p) => ({ ...p, refundMethod: val || "gcash" }));
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
                   >
-                    <FaMoneyBillWave /> GCash Wallet
-                  </button>
+                    <option value="">Select payment method</option>
+                    <option value="gcash">gcash</option>
+                    <option value="bank">bank</option>
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
 
+            {/* Refund Account Details */}
+            <Card className="rounded-2xl border-gray-100 shadow-sm">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <h5 className="font-bold text-lg text-gray-900">Refund Account Details</h5>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Where refunds will be sent in case of tour cancellation or rescheduling.
+                    </p>
+                  </div>
                   <button
-                    onClick={() => setPayment("bank-transfer")}
-                    className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${
-                      payment === "bank-transfer"
-                        ? "bg-primary border-primary text-white"
-                        : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                    }`}
+                    type="button"
+                    onClick={handleCopyContactToRefund}
+                    className="text-xs font-semibold text-primary hover:underline self-start sm:self-auto cursor-pointer"
                   >
-                    <FaUniversity /> Bank Transfer
+                    Same as contact info
                   </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Refund Account Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.accountName}
+                      onChange={onChange("accountName")}
+                      placeholder="e.g. Maria Santos"
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Refund Method <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={form.refundMethod}
+                      onChange={onChange("refundMethod")}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="gcash">gcash</option>
+                      <option value="bank">bank</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">
+                      Refund Account / Wallet Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.accountNumber}
+                      onChange={onChange("accountNumber")}
+                      placeholder={
+                        form.refundMethod === "gcash"
+                          ? "e.g. 09181234567 or +639181234567"
+                          : "e.g. 1234567890 (Bank Account Number)"
+                      }
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

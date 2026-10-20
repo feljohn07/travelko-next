@@ -415,7 +415,7 @@ export default function AdminBookingApplicationsPage() {
 
                   {/* Private Booking updates actions */}
                   <div className="pt-3 flex gap-2">
-                    {selectedBooking.status === "approved" && (
+                    {selectedBooking.status?.toLowerCase() === "completed" && (
                       <Button
                         size="sm"
                         onClick={() => updatePrivateStatus(selectedBooking.id, "paid")}
@@ -490,7 +490,7 @@ export default function AdminBookingApplicationsPage() {
 
                   {/* Mass actions on entire group */}
                   <div className="flex gap-2 pt-2">
-                    {selectedBooking.status === "completed" && (
+                    {selectedBooking.status?.toLowerCase() === "completed" && (
                       <Button
                         size="sm"
                         onClick={() => updateJoinerStatus(selectedBooking.id, "paid")}
