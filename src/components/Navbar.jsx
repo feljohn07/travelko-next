@@ -11,9 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FaTachometerAlt, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaTachometerAlt, FaUser, FaSignOutAlt, FaTools } from "react-icons/fa";
 import defaultProfile from "@/assets/defaultUser.png";
 import Image from "next/image";
+
+const isDevUiEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_UI !== "false";
 
 const NAV_LINKS = [
   { href: "/", label: "Home", exact: true },
@@ -74,6 +76,21 @@ export default function Navbar() {
                 {label}
               </Link>
             ))}
+
+            {isDevUiEnabled && (
+              <Link
+                href="/dev"
+                className={`ml-1 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors inline-flex items-center gap-1.5 border ${
+                  isActive("/dev", false)
+                    ? "bg-amber-500 text-white border-amber-500 shadow-xs"
+                    : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+                }`}
+                title="Development Status Manipulator (Temporary)"
+              >
+                <FaTools size={11} />
+                <span>Dev Tools</span>
+              </Link>
+            )}
 
             {/* Auth area */}
             {isLoggedIn ? (
@@ -168,6 +185,21 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
+
+          {isDevUiEnabled && (
+            <Link
+              href="/dev"
+              onClick={() => setMenuOpen(false)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-colors ${
+                isActive("/dev", false)
+                  ? "bg-amber-500 text-white"
+                  : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+              }`}
+            >
+              <FaTools size={13} />
+              <span>Dev Tools (Status UI)</span>
+            </Link>
+          )}
 
           <div className="pt-2 border-t border-gray-100">
             {isLoggedIn ? (
